@@ -2,12 +2,19 @@
 // impact sounds, chat messages, game.dice3d); Dicer brings its looks, effects, sounds, pets and
 // tools on top of it, each feature on the DsN API made for it. v1's entry (src/main.js) stays in
 // the tree, unbuilt, while its features are ported one at a time.
+import { registerLighting } from './lighting.js';
 import { registerSounds } from './sounds/register.js';
 
 export const DSN_ID = 'dice-so-nice';
 
 /** Everything Dicer registers in Dice So Nice. DsN fires the hook with Hooks.call: return nothing. */
 export function onDiceSoNiceReady(dice3d) {
+  // first, and synchronously: DsN loads the player's environment right after this hook
+  try {
+    registerLighting(dice3d);
+  } catch (err) {
+    console.error('dicer: cannot register the studio lighting', err);
+  }
   try {
     registerSounds(dice3d);
   } catch (err) {

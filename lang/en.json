@@ -1541,6 +1541,9 @@
         "wood": "Wood (Dicer)",
         "stone": "Stone (Dicer)",
         "metal": "Metal (Dicer)"
+      },
+      "Ambiance": {
+        "studio": "Studio (Dicer)"
       }
     }
   }
