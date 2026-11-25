@@ -834,18 +834,18 @@
         "Mimic": "Mimic",
         "Slime": "Slime",
         "Dragonling": "Dragonling",
-      "Owl": "Owl",
-      "Frog": "Frog",
-      "Ghost": "Ghost",
-      "Mushroom": "Mushroom",
-      "Eye": "Floating eye",
-      "Golem": "Pebble golem",
-      "Cat": "Cat",
-      "Fox": "Fox",
-      "Lantern": "Paper lantern",
-      "Imp": "Imp",
-      "Robot": "Clockwork robot",
-      "Jester": "Jester doll",
+        "Owl": "Owl",
+        "Frog": "Frog",
+        "Ghost": "Ghost",
+        "Mushroom": "Mushroom",
+        "Eye": "Floating eye",
+        "Golem": "Pebble golem",
+        "Cat": "Cat",
+        "Fox": "Fox",
+        "Lantern": "Paper lantern",
+        "Imp": "Imp",
+        "Robot": "Clockwork robot",
+        "Jester": "Jester doll",
         "Color": "Colour",
         "Natural": "Natural colours",
         "NaturalHint": "Each pet in its own colours (a brown owl, a green frog...) instead of the colour you pick. Picking a colour turns this off.",
@@ -1532,6 +1532,15 @@
         "pending": "Not migrated yet (logs in next)",
         "migrated": "Migrated",
         "off": "Not migrated: import is switched off"
+      }
+    },
+    "V2": {
+      "NeedsDsn": "Dicer needs Dice So Nice: enable it in Manage Modules.",
+      "Surface": {
+        "felt": "Felt (Dicer)",
+        "wood": "Wood (Dicer)",
+        "stone": "Stone (Dicer)",
+        "metal": "Metal (Dicer)"
       }
     }
   }

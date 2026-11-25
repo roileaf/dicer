@@ -27,5 +27,13 @@
   "changelog": "https://github.com/roileaf/dicer/blob/main/CHANGELOG.md",
   "url": "#{URL}#",
   "manifest": "#{MANIFEST}#",
-  "download": "#{DOWNLOAD}#"
+  "download": "#{DOWNLOAD}#",
+  "relationships": {
+    "requires": [
+      {
+        "id": "dice-so-nice",
+        "type": "module"
+      }
+    ]
+  }
 }
