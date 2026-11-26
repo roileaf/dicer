@@ -1,22 +1,3 @@
-// Dicer v2, step 4: clear resin with its insides, and jelly, as Dice So Nice materials (DsN
-// notes 5.1 and 5.4).
-//
-// Both are seen through by v1's environment refraction (shaders/bodies.js RESIN_REFRACTION): the
-// body is opaque for the renderer, so neither needs DsN's translucent rendering. The inside is
-// v1's ray march (shaders/interior.js, extras/insides/*), spliced into the refraction as v1 does.
-// The GLSL is v1's, unchanged, on the stand-ins of ./bodies.js, plus:
-// - vLocalCam: the camera in die-local space, in v1's units;
-// - the body colour: v1 reads the material colour (`diffuse`); on a DsN die the colour is in the
-//   map, so the Beer-Lambert body takes the texel (dcTexel).
-// The inside (type, shape, colours, density, the suspended layer) is a set of material settings.
-// The type, the shape and the layer pick the GLSL: one program per combination, as in v1.
-//
-// Living insides: a look whose inside moves marks its three.js material `userData.animated`
-// (what DiceMaterial.setAnimated() sets for a whole material: here only the looks that move ask
-// DsN for frames). Each die gets its own copy (die.isolateMaterial) and v1's motion state
-// (insides/live.js: time, spin, lagged up, swirl) is stepped on the FRAME event. Ten seconds
-// after its result a die's inside has come to rest: its copy stops asking for frames, until the
-// die is hit again.
 import { Color, Matrix3, Quaternion, Vector3, Vector4 } from 'three';
 import { soundMaterialOf } from '../../audio/sound-material.js';
 import { DEFAULT_APPEARANCE, normalizeAppearance } from '../../look/appearance.js';
@@ -77,14 +58,11 @@ export const INSIDE_SHAPES = Object.freeze([
 const INCLUSIONS = ['flower', 'moss', 'butterfly'];
 const EXTRAS = ['none', ...EXTRA_KINDS];
 
-/** v1's high tier marches 32 steps; the inside always moves where the look and the player allow. */
 export const FLAGS = Object.freeze({ interiors: true, interiorSteps: 32, insideMotion: true });
 
-/** v1's studio key strip at (-6, 4, 2), towards the light (the inside's sparkle). */
 const KEY_LIGHT_DIR = [-6, 4, 2].map((v) => v / Math.hypot(-6, 4, 2));
 
 const D = DEFAULT_APPEARANCE.interior;
-/** The defaults of the material settings: v1's default look (a nebula in clear resin). */
 export const RESIN_DEFAULTS = Object.freeze({
   inside: D.type,
   shape: D.shape,
@@ -104,7 +82,6 @@ export const JELLY_DEFAULTS = Object.freeze({ roughness: 20 });
 
 const pct = (v, d) => (Number.isFinite(v) ? v : d) / 100;
 
-/** A look's material settings as a normalised v1 appearance (body and interior only matter). */
 export function lookOf(type, settings = {}) {
   if (type === 'jelly') {
     const s = { ...JELLY_DEFAULTS, ...settings };
@@ -131,8 +108,6 @@ export function lookOf(type, settings = {}) {
   });
 }
 
-// --- shader ----------------------------------------------------------------------------------
-
 const VERTEX_CAM_PARS = /* glsl */ `
 varying vec3 vLocalCam;
 `;
@@ -140,19 +115,8 @@ const VERTEX_CAM = /* glsl */ `
 	vLocalCam = ( inverse( modelMatrix ) * vec4( cameraPosition, 1.0 ) ).xyz * uDcLocalScale;
 `;
 
-/**
- * How much brighter the refracted body (and the inside in it) is drawn on DsN. v1 renders with
- * three's Neutral tone mapping, which keeps dark colours as they are; DsN renders with ACES,
- * which crushes them, so a body as dark as v1's reads black on the board. DsN's own glass
- * doubles its environment for the same reason; here only what is seen through the body is
- * lifted, so the studio's reflections on the coat stay as they are.
- */
 export const RESIN_GAIN = Object.freeze({ resin: 2.5, jelly: 2 });
 
-/**
- * v1's refraction for a DsN die. The body colour is the material's in v1; a DsN die's is in its
- * map (dcTexel). The refracted light is lifted by uDcResinGain. Throws if v1's lines moved.
- */
 function bodyFromTexel(lighting) {
   const from = 'mix( diffuse, uResinTint.rgb, uResinTint.a )';
   const out = 'dcRefracted *= 1.0 - dcRFin;';
@@ -163,11 +127,6 @@ function bodyFromTexel(lighting) {
     .replace(out, 'dcRefracted *= ( 1.0 - dcRFin ) * uDcResinGain;');
 }
 
-/**
- * Jelly's rim glow and velvety sheen are in v1 its second colour, by default a lighter shade of
- * the jelly. On a DsN die the colour is the player's dice colour, per face if they want, so both
- * take the die's own hue at full brightness (dcJellyHue, from the texel).
- */
 const JELLY_HUE = /* glsl */ `
 vec3 dcJellyHue( vec3 c ) { return c / max( max( c.r, c.g ), max( c.b, 1e-3 ) ); }
 `;
@@ -181,10 +140,6 @@ function ownColour(lighting) {
   return lighting.replaceAll('uBodyColor2', 'dcJellyHue( dcTexel.rgb )');
 }
 
-/**
- * The GLSL and uniforms of a look: { defines, pars, roughness, lighting, uniforms, live }.
- * `a` is lookOf()'s appearance, `diceType` DsN's ("d2" is the coin: a flat body).
- */
 export function resinGlsl(a, diceType = 'd20') {
   const coin = diceType === 'd2';
   const jelly = a.body.type === 'jelly';
@@ -241,7 +196,6 @@ export function resinGlsl(a, diceType = 'd20') {
   return { defines, pars, roughness: '', lighting: bodyFromTexel(lighting), uniforms, live };
 }
 
-/** Splices a look's resin GLSL into a three.js MeshPhysical shader (a DsN onBeforeCompile shader). */
 export function patchResinShader(shader, glsl) {
   shader.vertexShader = after(
     after(shader.vertexShader, 'common', VERTEX_PARS + VERTEX_CAM_PARS),
@@ -249,7 +203,6 @@ export function patchResinShader(shader, glsl) {
     VERTEX + VERTEX_CAM,
   );
   let f = shader.fragmentShader;
-  // dcRim: v1's darkening of the engraved rim, which a DsN die does not have
   f = after(
     f,
     'common',
@@ -271,8 +224,6 @@ export function patchResinShader(shader, glsl) {
   return shader;
 }
 
-// --- materials -------------------------------------------------------------------------------
-
 const select = (id, name, list, key, defaultValue) => ({
   id,
   name: L(name),
@@ -280,7 +231,6 @@ const select = (id, name, list, key, defaultValue) => ({
   options: Object.fromEntries(list.map((v) => [v, L(`${key}.${v}`)])),
 });
 
-/** Every uniform any inside may use, at its default: DsN creates them with each three.js material. */
 export function insideUniforms() {
   const all = {};
   const add = (settings) => Object.assign(all, resinGlsl(lookOf('resin', settings)).uniforms);
@@ -290,20 +240,17 @@ export function insideUniforms() {
   return all;
 }
 
-/** Puts a look's settings on its three.js material: its uniforms, roughness, and whether it moves. */
 export function applyResinSettings(type, mat, diceType, settings) {
   const a = lookOf(type, settings);
   const { uniforms, live } = resinGlsl(a, diceType);
   trackLocalScale(mat);
   const u = (mat.userData.uniforms ??= {});
-  // fresh values: a look never shares a colour or a vector with another look's material
   for (const [name, { value }] of Object.entries(uniforms)) u[name] = { value };
   mat.roughness = a.body.roughness;
   mat.userData.dicerLive = live;
-  if (live) mat.userData.animated = true; // DsN draws every frame while such a die is shown
+  if (live) mat.userData.animated = true;
 }
 
-/** The clear resin (with its inside) or the jelly DiceMaterial (not registered). */
 export function createResinMaterial(DiceMaterial, type) {
   const jelly = type === 'jelly';
   const base = jelly
@@ -317,7 +264,7 @@ export function createResinMaterial(DiceMaterial, type) {
 
   const defaults = jelly ? resinGlsl(lookOf('jelly')).uniforms : insideUniforms();
   for (const [name, { value }] of Object.entries(defaults)) material.addUniform(name, value);
-  material.addUniform('uBodyColor2', new Color('#000000')); // declared by the shared stand-ins
+  material.addUniform('uBodyColor2', new Color('#000000'));
   material.addUniform('uDcLocalScale', LOCAL_SCALE);
   if (!jelly) {
     const d = RESIN_DEFAULTS;
@@ -388,7 +335,6 @@ export function createResinMaterial(DiceMaterial, type) {
 
 export const RESIN_TYPES = Object.freeze(['resin', 'jelly']);
 
-/** Registers clear resin and jelly in DsN's Material list. Returns their ids. */
 export function registerResin(dice3d, DiceMaterial) {
   const ids = [];
   for (const type of RESIN_TYPES) {
@@ -401,14 +347,10 @@ export function registerResin(dice3d, DiceMaterial) {
   return ids;
 }
 
-// --- living insides --------------------------------------------------------------------------
-
-// die mesh -> ms (performance.now) of its result; absent while it rolls
 const landed = new WeakMap();
 const quat = new Quaternion();
 const stepOpts = { reduced: false, factor: 1, flare: 0 };
 
-/** FRAME: steps the inside of one die whose look moves, on the die's own material. */
 export function onDiceFrame({ dice, delta }, now = performance.now()) {
   if (!dice?.material?.userData?.dicerLive) return;
   const own = dice.die?.isolateMaterial();
@@ -420,16 +362,13 @@ export function onDiceFrame({ dice, delta }, now = performance.now()) {
   stepOpts.flare = u.uInteriorFlare?.value ?? 0;
   if (u.uDcLocalScale) u.uDcLocalScale.value = localScaleOf(dice.geometry);
   insideMotion.step(dice, u, dice.getWorldQuaternion(quat), delta, stepOpts);
-  // at rest: this die no longer needs frames (DsN stops drawing once no die does)
   own.userData.animated = stepOpts.factor > 0;
 }
 
-/** RESULT: the die has landed; its inside eases to rest from here. */
 export function onDiceResult({ dice }, now = performance.now()) {
   if (dice?.material?.userData?.dicerLive) landed.set(dice, now);
 }
 
-/** COLLIDE: a resting die that is hit moves again. */
 export function onDiceCollide({ dice }, now = performance.now()) {
   const data = dice?.material?.userData;
   if (!data?.dicerLive || !landed.has(dice)) return;
@@ -437,7 +376,6 @@ export function onDiceCollide({ dice }, now = performance.now()) {
   data.animated = true;
 }
 
-/** Listens to DsN's dice events for the living insides. DsN fires them with Hooks.call: return nothing. */
 export function registerInsideMotion(hooks = globalThis.Hooks) {
   hooks.on('diceSoNiceDiceFrame', (e) => void onDiceFrame(e));
   hooks.on('diceSoNiceDiceResult', (e) => void onDiceResult(e));

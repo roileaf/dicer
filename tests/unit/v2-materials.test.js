@@ -20,7 +20,6 @@ const physical = () => ({
   fragmentShader: THREE.ShaderLib.physical.fragmentShader,
 });
 
-/** A three.js material as DsN hands it to the callbacks: its uniforms copied in userData. */
 function dsnMaterial(material, appearance) {
   const mat = new THREE.MeshPhysicalMaterial(material.base.options);
   mat.userData.uniforms = {};
@@ -49,8 +48,8 @@ describe('v2 body materials (DsN 5.1)', () => {
     expect(ids).toEqual(BODY_TYPES.map((t) => `dicer.body-${t}`));
     expect(dice3d.addMaterial).toHaveBeenCalledTimes(9);
     for (const [m] of dice3d.addMaterial.mock.calls) {
-      expect(m.base.type).toBe('physical'); // setBase before addMaterial
-      expect(m.translucent).toBe(false); // none uses three's transmission
+      expect(m.base.type).toBe('physical');
+      expect(m.translucent).toBe(false);
     }
   });
 
@@ -89,10 +88,8 @@ describe('v2 body materials (DsN 5.1)', () => {
     expect(mat.userData.uniforms.uBodyPreset.value.toArray()).toEqual([1, 6, 2.2, 0.7]);
     expect(mat.userData.uniforms.uBodyColor2.value.getHexString()).toBe('ff0000');
     expect(mat.roughness).toBeCloseTo(0.8);
-    // the defaults when the look comes from a colorset: the first preset
     const plain = dsnMaterial(wood, { materialSettings: {} });
     expect(plain.userData.uniforms.uBodyPreset.value.x).toBe(0);
-    // each material owns its values (DsN copies the uniforms per three.js material)
     expect(plain.userData.uniforms.uBodyColor2.value).not.toBe(
       mat.userData.uniforms.uBodyColor2.value,
     );
@@ -111,7 +108,6 @@ describe('v2 body materials (DsN 5.1)', () => {
       expect(shader.vertexShader).toContain('vLocalPos = transformed * uDcLocalScale;');
       for (const d of glsl.defines) expect(shader.fragmentShader).toContain(`#define ${d}`);
       const f = shader.fragmentShader;
-      // mask, body, restore: in that order, after DsN's map has set diffuseColor
       const at = (s) => f.indexOf(s);
       expect(at('#include <map_fragment>')).toBeLessThan(at('vec4 dcTexel'));
       expect(at('vec4 dcTexel')).toBeLessThan(at('mix( diffuseColor.rgb, dcTexel.rgb, dcMask )'));
@@ -139,7 +135,6 @@ describe('v2 body materials (DsN 5.1)', () => {
   });
 
   it('maps DsN metres to v1 die units by the size of the die drawn (DsN sizes dice to the screen)', () => {
-    // v1's dice have unit circumradius: a board die of radius 0.04 m and a preview die of 0.02 m
     const die = (r) =>
       new THREE.BufferGeometry().setAttribute(
         'position',
@@ -148,8 +143,7 @@ describe('v2 body materials (DsN 5.1)', () => {
     const board = die(0.04);
     expect(localScaleOf(board)).toBeCloseTo(25, 4);
     expect(localScaleOf(die(0.02))).toBeCloseTo(50, 4);
-    expect(localScaleOf(new THREE.BufferGeometry())).toBe(LOCAL_SCALE); // nothing to measure
-    // every body carries the uniform, and its look follows the geometry at each draw
+    expect(localScaleOf(new THREE.BufferGeometry())).toBe(LOCAL_SCALE);
     for (const type of BODY_TYPES) {
       const material = createBodyMaterial(DiceMaterial, type);
       expect(material._uniforms.get('uDcLocalScale')).toBe(LOCAL_SCALE);

@@ -1,9 +1,3 @@
-// Dicer v2: bakes Dicer's procedural studio (src/render/studio-env.js) to an equirectangular
-// Radiance .hdr, the only kind of environment Dice So Nice takes (DsN note 5.3).
-// v1 renders the studio scene through PMREM at run time; it is only a dark backdrop and six
-// emissive rectangles aimed at the origin, so each pixel is one exact ray cast from the origin,
-// supersampled. Colours are three's own (linear, after its sRGB conversion), so the file holds
-// the same radiance v1's PMREM saw. Usage: node scripts/bake-studio-hdr.mjs [width]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Matrix4, Vector3 } from 'three';
@@ -11,9 +5,8 @@ import { createStudioScene } from '../src/render/studio-env.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 export const OUT = 'assets/lighting/dicer-studio.hdr';
-const SS = 3; // samples per axis and pixel
+const SS = 3;
 
-/** The panels of the studio scene: world matrix inverse, half sizes, linear radiance. */
 export function studioPanels(scene = createStudioScene()) {
   const panels = [];
   let backdrop = null;
@@ -24,12 +17,16 @@ export function studioPanels(scene = createStudioScene()) {
       continue;
     }
     const { width, height } = o.geometry.parameters;
-    panels.push({ inv: new Matrix4().copy(o.matrixWorld).invert(), hw: width / 2, hh: height / 2, rgb: [c.r, c.g, c.b] });
+    panels.push({
+      inv: new Matrix4().copy(o.matrixWorld).invert(),
+      hw: width / 2,
+      hh: height / 2,
+      rgb: [c.r, c.g, c.b],
+    });
   }
   return { panels, backdrop };
 }
 
-/** Radiance seen from the origin along `dir` (unit): the nearest panel hit, else the backdrop. */
 export function radiance(dir, { panels, backdrop }) {
   let best = Infinity;
   let rgb = backdrop;
@@ -37,7 +34,7 @@ export function radiance(dir, { panels, backdrop }) {
   const d = new Vector3();
   for (const p of panels) {
     o.set(0, 0, 0).applyMatrix4(p.inv);
-    d.copy(dir).transformDirection(p.inv); // the panel's matrix has no scale: lengths are kept
+    d.copy(dir).transformDirection(p.inv);
     if (Math.abs(d.z) < 1e-9) continue;
     const t = -o.z / d.z;
     if (!(t > 0) || t >= best) continue;
@@ -51,15 +48,12 @@ export function radiance(dir, { panels, backdrop }) {
   return rgb;
 }
 
-/** The direction of equirect texel coordinates (u right, v up, both 0..1), as three samples it. */
 export function directionOf(u, v, out = new Vector3()) {
-  // three's equirectUv: u = atan(z, x) / 2pi + 0.5, v = asin(y) / pi + 0.5
   const phi = (u - 0.5) * 2 * Math.PI;
   const lat = (v - 0.5) * Math.PI;
   return out.set(Math.cos(phi) * Math.cos(lat), Math.sin(lat), Math.sin(phi) * Math.cos(lat));
 }
 
-/** Linear RGB float pixels, row 0 at the top (up), as HDRLoader (flipY) expects. */
 export function bake(width, height = width / 2, studio = studioPanels()) {
   const px = new Float32Array(width * height * 3);
   const dir = new Vector3();
@@ -86,17 +80,19 @@ export function bake(width, height = width / 2, studio = studioPanels()) {
   return px;
 }
 
-/** One RGBE texel. */
 export function rgbe(r, g, b) {
   const m = Math.max(r, g, b);
   if (m < 1e-32) return [0, 0, 0, 0];
   const e = Math.ceil(Math.log2(m) + 1e-9);
   const f = 256 / 2 ** e;
-  // the mantissa of the largest channel stays below 256
-  return [Math.min(255, Math.floor(r * f)), Math.min(255, Math.floor(g * f)), Math.min(255, Math.floor(b * f)), e + 128];
+  return [
+    Math.min(255, Math.floor(r * f)),
+    Math.min(255, Math.floor(g * f)),
+    Math.min(255, Math.floor(b * f)),
+    e + 128,
+  ];
 }
 
-/** Run-length encodes one channel of a scanline (Radiance's new RLE). */
 function rle(bytes) {
   const out = [];
   let i = 0;
@@ -120,11 +116,15 @@ function rle(bytes) {
   return out;
 }
 
-/** A Radiance .hdr file (RLE scanlines) of linear RGB float pixels. */
 export function encodeHdr(px, width, height) {
   const header = `#?RADIANCE\n# Dicer studio, scripts/bake-studio-hdr.mjs\nFORMAT=32-bit_rle_rgbe\n\n-Y ${height} +X ${width}\n`;
   const parts = [Buffer.from(header, 'ascii')];
-  const ch = [new Uint8Array(width), new Uint8Array(width), new Uint8Array(width), new Uint8Array(width)];
+  const ch = [
+    new Uint8Array(width),
+    new Uint8Array(width),
+    new Uint8Array(width),
+    new Uint8Array(width),
+  ];
   for (let j = 0; j < height; j++) {
     for (let i = 0; i < width; i++) {
       const k = (j * width + i) * 3;

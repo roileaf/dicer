@@ -1,20 +1,3 @@
-// Dicer v2, step 3: Dicer's body types as Dice So Nice materials (DsN note 5.1).
-//
-// DsN draws the faces (dice colour, labels, outline, texture) into the material's map; a
-// material only defines the surface under them. Each Dicer body becomes a DiceMaterial whose
-// three.js base is v1's MeshPhysical preset and whose shader callback splices in v1's own body
-// GLSL (src/render/extras/bodies/*, src/render/shaders/bodies.js), unchanged, behind a few
-// stand-ins for what only Dicer's geometry has:
-// - vLocalPos: die-local position in v1's units (unit circumradius), from DsN's metres;
-// - vFaceId, vEdgeDist, vFaceUV, dcD: no face ids, edge distances or glyph distances on a DsN
-//   die, so every fragment reads as the middle of a face, away from any glyph;
-// - dcMask (v1: the number fill): DsN's emissive map, which holds the labels (grey on black)
-//   whether or not they glow. The body pattern is drawn under it and the labels are put back.
-// The die's colour is DsN's (the map); the second colour, the style (preset), the metal finish
-// and the roughness are material settings, saved with the player's look.
-//
-// Resin and jelly see through the body (v1's environment refraction) and come with the insides
-// in step 4.
 import { Color, Vector4 } from 'three';
 import { soundMaterialOf } from '../../audio/sound-material.js';
 import { PRESET_COLORS } from '../../look/body-colors.js';
@@ -28,15 +11,8 @@ import { MARBLE_COLOR, PEARL_COLOR, VEIN_SCALE } from '../../render/shaders/bodi
 import { NOISE_GLSL } from '../../render/shaders/noise.js';
 import { diceSoundSetId, MODULE_ID } from '../sounds/register.js';
 
-/**
- * DsN metres to v1 die-local units. v1's dice have unit circumradius; a DsN die's size follows
- * the screen on the board (DiceFactory.baseScale) and is another one in pictures and previews,
- * so the factor is 1 / the circumradius of the geometry being drawn: the uniform uDcLocalScale,
- * set by trackLocalScale() before each draw. LOCAL_SCALE is its value until then (a d6 preview).
- */
 export const LOCAL_SCALE = 60;
 const radii = new WeakMap();
-/** 1 / the farthest vertex of a geometry from its origin (kept per geometry). */
 export function localScaleOf(geometry) {
   let r = radii.get(geometry);
   if (r === undefined) {
@@ -49,10 +25,6 @@ export function localScaleOf(geometry) {
   }
   return r;
 }
-/**
- * Keeps a look's uDcLocalScale at the size of the die it draws (a look's material is one die
- * type at one size). A die's own copy (isolateMaterial) starts from the look's value.
- */
 export function trackLocalScale(mat) {
   mat.onBeforeRender = function (_renderer, _scene, _camera, geometry) {
     const u = this.userData.uniforms?.uDcLocalScale;
@@ -60,18 +32,11 @@ export function trackLocalScale(mat) {
   };
 }
 
-/** v1 keeps a hairline coat on metal so an enamel fill can gloss: the same program shape. */
 const METAL_COAT = 0.001;
 const METAL_FINISHES = ['polished', 'mirror', 'patina', 'worn'];
 
-/** The v1 body module of a body type, with presets (a uniform), or null. */
 const MODULES = { iridescent, gem, wood, stone, bone };
 
-/**
- * One entry per body type: v1's MeshPhysical parameters (dice-material.js BODY_PRESETS and the
- * modules' PARAMS), the DsN material shown without Realistic Lighting, the weight against
- * plastic (DsN's own: metal 7, wood 0.65, stone 1.5) and the second colour's default.
- */
 export const BODIES = Object.freeze({
   opaque: { base: { roughness: 0.4, clearcoat: 0.6 }, fallback: 'plastic', weight: 1 },
   metal: {
@@ -109,10 +74,8 @@ export const BODIES = Object.freeze({
 
 export const bodyMaterialId = (type) => `${MODULE_ID}.body-${type}`;
 
-/** The presets of a body type (v1's order: the first is the default), or []. */
 export const presetsOf = (type) => Object.keys(MODULES[type]?.PRESET_PARAMS ?? {});
 
-/** v1's patch of a module body type for one preset (defines, uniforms, chunks, params). */
 function modulePatch(type, preset, extra = {}) {
   const fn = {
     iridescent: iridescent.iridescentPatch,
@@ -124,15 +87,12 @@ function modulePatch(type, preset, extra = {}) {
   return fn({ body: { type, preset, finish: 'polished', ...extra } });
 }
 
-/** A settings range is 0..100: v1's roughness is 0..1. */
 const roughnessDefault = (type) => {
   const first = presetsOf(type)[0];
   return Math.round(100 * (PRESET_COLORS[first]?.roughness ?? BODIES[type].base?.roughness ?? 0.4));
 };
 const color2Default = (type) =>
   BODIES[type].color2 ?? PRESET_COLORS[presetsOf(type)[0]]?.color2 ?? '#000000';
-
-// --- shader ----------------------------------------------------------------------------------
 
 export const after = (src, anchor, code) =>
   src.replace(`#include <${anchor}>`, `#include <${anchor}>\n${code}`);
@@ -145,7 +105,6 @@ export const VERTEX = /* glsl */ `
 	vLocalPos = transformed * uDcLocalScale;
 `;
 
-/** What v1's body GLSL reads that a DsN die does not have (see the head of this file). */
 export const FRAGMENT_PARS = /* glsl */ `
 varying vec3 vLocalPos;
 uniform vec3 uBodyColor2;
@@ -156,7 +115,6 @@ uniform vec3 uBodyColor2;
 float dcBorderH( float e ) { return 0.0; }
 `;
 
-/** After color_fragment: the labels (DsN's emissive map) before the body is drawn. */
 export const LABEL_MASK = /* glsl */ `
 	vec4 dcTexel = diffuseColor;
 	float dcMask = 0.0;
@@ -168,17 +126,12 @@ export const LABEL_RESTORE = /* glsl */ `
 	diffuseColor.rgb = mix( diffuseColor.rgb, dcTexel.rgb, dcMask );
 `;
 
-/** Oxide is not metal (v1 swaps this into its own metalness line). */
 const PATINA_METALNESS = /* glsl */ `
 #ifdef DICER_PATINA
 	metalnessFactor = mix( metalnessFactor, 0.0, dcPatina );
 #endif
 `;
 
-/**
- * The GLSL pieces of a body type: { defines, noise, pars, color, roughness, metalness, coat }.
- * `finish` only matters for metal.
- */
 export function bodyGlsl(type, finish = 'polished') {
   const out = {
     defines: [],
@@ -218,7 +171,6 @@ export function bodyGlsl(type, finish = 'polished') {
   return out;
 }
 
-/** Splices a body's GLSL into a three.js MeshPhysical shader (a DsN onBeforeCompile shader). */
 export function patchBodyShader(shader, glsl) {
   if (!glsl.color && !glsl.roughness && !glsl.coat) return shader;
   shader.vertexShader = after(
@@ -241,14 +193,9 @@ export function patchBodyShader(shader, glsl) {
   return shader;
 }
 
-// --- materials -------------------------------------------------------------------------------
-
-// DsN localizes a material's name, not its settings' names and options: Dicer does (the hook
-// runs once Foundry's translations are loaded)
 export const L = (k) =>
   globalThis.game?.i18n?.localize(`DICER.Appearance.${k}`) ?? `DICER.Appearance.${k}`;
 
-/** The DiceMaterial of one body type (not registered). */
 export function createBodyMaterial(DiceMaterial, type) {
   const spec = BODIES[type];
   const presets = presetsOf(type);
@@ -263,7 +210,6 @@ export function createBodyMaterial(DiceMaterial, type) {
     .setImpactSounds(diceSoundSetId(soundMaterialOf({ body: { type } })))
     .setWeight(spec.weight);
 
-  // the body's uniforms: v1's (uBodyPreset, uDcLines...) and the second colour
   const uses2 = type !== 'opaque';
   if (uses2) material.addUniform('uBodyColor2', new Color(color2Default(type)));
   for (const [name, { value }] of Object.entries(patch?.uniforms ?? {}))
@@ -302,7 +248,6 @@ export function createBodyMaterial(DiceMaterial, type) {
   if (type === 'iridescent')
     material.addSettingBoolean({ id: 'streaks', name: L('Body.LayerLines'), defaultValue: true });
 
-  // a look's values: in the process callback (the shader callback runs again for a die's own copy)
   material.registerProcessMaterialCallback((_diceType, mat, appearance) =>
     applySettings(type, mat, appearance?.materialSettings ?? {}),
   );
@@ -312,7 +257,6 @@ export function createBodyMaterial(DiceMaterial, type) {
   return material;
 }
 
-/** Puts a look's material settings on its three.js material and uniforms. */
 export function applySettings(type, mat, settings) {
   trackLocalScale(mat);
   const u = mat.userData.uniforms ?? {};
@@ -330,14 +274,8 @@ export function applySettings(type, mat, settings) {
   mat.roughness = type === 'metal' && settings.finish === 'mirror' ? 0.02 : r;
 }
 
-/** Body types ported in this step, in v1's order. */
 export const BODY_TYPES = Object.freeze(Object.keys(BODIES));
 
-/**
- * Registers every body type in DsN's Material list. Returns their ids. addMaterial's promises
- * (resolved once a material's images load: these have none) are not awaited: DsN calls
- * diceSoNiceReady with Hooks.call, which must not get a promise back.
- */
 export function registerBodies(dice3d, DiceMaterial) {
   const ids = [];
   for (const type of BODY_TYPES) {

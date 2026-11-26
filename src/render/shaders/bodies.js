@@ -67,7 +67,6 @@ export const BODY_VERTEX = /* glsl */ `
 #endif
 `;
 
-/** The resin body's uniforms (fragment shader; Dicer v2 declares them on a DsN material too). */
 export const RESIN_UNIFORMS = /* glsl */ `
 uniform float uResinDensity; // Beer-Lambert strength (1: a full ${RESIN.refChord} chord transmits the body colour)
 uniform float uResinFloor;   // albedo of the lit table seen below the horizon through resin
@@ -75,7 +74,6 @@ uniform vec3 uResinRadii;    // body ellipsoid semi-axes, die-local (a ${RESIN.r
 uniform vec4 uResinTint;     // rgb: tint target, a: its share of the Beer-Lambert body colour
 `;
 
-/** The resin varying, model matrix and chord through the body ellipsoid (fragment shader, after RESIN_UNIFORMS and vLocalPos). */
 export const RESIN_PARS = /* glsl */ `
 #ifdef DICER_RESIN
 varying vec3 vLocalCam;

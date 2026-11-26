@@ -39,7 +39,7 @@ describe('v2 studio lighting (DsN 5.3)', () => {
     };
     vi.stubGlobal('Hooks', { once: vi.fn(), on: vi.fn() });
     const { onDiceSoNiceReady } = await import('../../src/v2/main.js');
-    expect(onDiceSoNiceReady(dice3d)).toBeUndefined(); // DsN calls the hook with Hooks.call
+    expect(onDiceSoNiceReady(dice3d)).toBeUndefined();
     expect(order[0]).toBe('environment');
   });
 
@@ -48,18 +48,17 @@ describe('v2 studio lighting (DsN 5.3)', () => {
     expect([width, height]).toEqual([1024, 512]);
     const at = (u, v) => {
       const i = Math.floor(u * width);
-      const j = Math.floor((1 - v) * height); // row 0 is up
+      const j = Math.floor((1 - v) * height);
       const k = (j * width + i) * 4;
       return [data[k], data[k + 1], data[k + 2]];
     };
     const studio = studioPanels();
-    // straight up: the overhead softbox; straight down: the table; toward the key light (-6, 4, 2)
     const up = radiance(new Vector3(0, 1, 0), studio);
     expect(at(0.5, 0.999)[0]).toBeCloseTo(up[0], 1);
     const key = new Vector3(-6, 4, 2).normalize();
     const u = Math.atan2(key.z, key.x) / (2 * Math.PI) + 0.5;
     const v = Math.asin(key.y) / Math.PI + 0.5;
-    expect(at(u, v)[0]).toBeGreaterThan(5); // the key is at 10x white
+    expect(at(u, v)[0]).toBeGreaterThan(5);
     expect(at(0.5, 0.001)[0]).toBeCloseTo(radiance(new Vector3(0, -1, 0), studio)[0], 1);
   });
 

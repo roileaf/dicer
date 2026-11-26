@@ -1,9 +1,6 @@
 import { execSync } from 'node:child_process';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 
-// Dicer v2: the build is the DsN add-on entry (src/v2/main.js). v1's chunk layout and its
-// world-start budget no longer apply: DsN is the engine, and three.js and DsN's API classes
-// come from DsN's own files (DsN note, section 2).
 const jsFiles = () => readdirSync('dist').filter((f) => f.endsWith('.js'));
 
 describe('build (v2)', () => {
@@ -23,8 +20,8 @@ describe('build (v2)', () => {
   it('bundles no copy of three.js and imports DsN files by relative paths', () => {
     for (const f of jsFiles()) {
       const code = readFileSync(`dist/${f}`, 'utf8');
-      expect(code).not.toMatch(/REVISION\s*=\s*["']\d+/); // three's core
-      expect(code).not.toMatch(/from\s*["']three["']/); // a bare specifier the browser can't resolve
+      expect(code).not.toMatch(/REVISION\s*=\s*["']\d+/);
+      expect(code).not.toMatch(/from\s*["']three["']/);
       for (const m of code.matchAll(/from\s*["']([^"']*dice-so-nice[^"']*)["']/g)) expect(m[1]).toMatch(/^\.\.\/\.\.\/dice-so-nice\//);
     }
   });

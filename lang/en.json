@@ -1557,6 +1557,16 @@
         "bone": "Bone (Dicer)",
         "resin": "Clear resin (Dicer)",
         "jelly": "Jelly (Dicer)"
+      },
+      "Themes": {
+        "Menu": "Dicer themes",
+        "MenuLabel": "Browse themes",
+        "MenuHint": "Pick one of Dicer's dice themes for your dice. Dice So Nice draws the pictures and keeps the theme as your dice look.",
+        "Use": "Use as my dice",
+        "InUse": "Your dice",
+        "UseHint": "This replaces your dice look in Dice So Nice. You can still change every part of it there.",
+        "Applied": "Your dice are now {name}.",
+        "NoPictures": "Your 3D dice are hidden, so the themes have no pictures."
       }
     }
   }

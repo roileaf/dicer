@@ -1,6 +1,3 @@
-// Stand-in for Dice So Nice's api.js in unit tests (vitest.config.js aliases 'dice-so-nice/api.js'
-// here). It keeps what Dicer reads back: the fields a DiceMaterial's setters set, its settings,
-// uniforms and callbacks, the same way DsN's DiceMaterial and DiceSettings store them.
 class Settings {
   constructor() {
     this._settings = [];

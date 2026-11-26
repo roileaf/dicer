@@ -27,7 +27,6 @@ const physical = () => ({
 const compiled = (settings, type = 'resin', diceType = 'd20') =>
   patchResinShader(physical(), resinGlsl(lookOf(type, settings), diceType));
 
-/** A die mesh as DsN's events hand it: its look's material, and die.isolateMaterial(). */
 function boardDie(material, settings) {
   const look = new THREE.MeshPhysicalMaterial();
   look.userData.uniforms = {};
@@ -58,8 +57,8 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
     const [resin, jelly] = dice3d.addMaterial.mock.calls.map(([m]) => m);
     for (const m of [resin, jelly]) {
       expect(m.base.type).toBe('physical');
-      expect(m.translucent).toBe(false); // v1's refraction is in its own shader: no transmission
-      expect(m.animated).toBe(false); // only the looks that move ask for frames
+      expect(m.translucent).toBe(false);
+      expect(m.animated).toBe(false);
       expect(m.fallback).toBe('resin');
     }
     expect(resin.impactSounds).toBe('dicer.dice-plastic');
@@ -81,7 +80,7 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
       'roughness',
     ]);
     expect(Object.keys(resin.settings[0].options)).toEqual([...INSIDE_TYPES]);
-    expect(jelly.settings.map((s) => s.id)).toEqual(['roughness']); // its glow is the die's own colour
+    expect(jelly.settings.map((s) => s.id)).toEqual(['roughness']);
   });
 
   it('declares every uniform any inside reads, so DsN creates them with the material', () => {
@@ -103,7 +102,7 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
       'uResinRadii',
     ])
       expect(names.has(name)).toBe(true);
-    expect(Object.keys(insideUniforms()).length).toBe(names.size - 2); // + uBodyColor2, uDcLocalScale
+    expect(Object.keys(insideUniforms()).length).toBe(names.size - 2);
   });
 
   it('splices v1`s refraction and every inside`s march into three`s physical shader', () => {
@@ -114,13 +113,12 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
         expect(f).toContain('#define DICER_RESIN');
         expect(f).toContain('float dcChord(');
         expect(f).toContain('vec3 dcRefracted = vec3( 0.0 );');
-        expect(f).toContain('mix( dcTexel.rgb, uResinTint.rgb, uResinTint.a )'); // the die colour is DsN's map
+        expect(f).toContain('mix( dcTexel.rgb, uResinTint.rgb, uResinTint.a )');
         if (inside !== 'none') expect(f).not.toContain('// dicer:interior');
         expect(f.includes('vec4 dcInterior(') || f.includes('dcInterior( vec3 p')).toBe(
           inside !== 'none',
         );
         expect(f.includes('#define DICER_STEPS 32')).toBe(inside !== 'none');
-        // the label mask is set before the refraction reads it
         expect(f.indexOf('float dcMask = 0.0;')).toBeLessThan(f.indexOf('vec3 dcRefracted'));
         expect(f.indexOf('float dcMask = 0.0;')).toBeGreaterThan(0);
       }
@@ -140,7 +138,6 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
     expect(g.live).toBe(false);
     const f = patchResinShader(physical(), g).fragmentShader;
     expect(f).toContain('#define DICER_JELLY');
-    // the rim glow and the sheen: the die's own hue (v1: its second colour)
     expect(f).toContain('totalDiffuse += ( 1.0 - dcMask ) * dcJellyHue( dcTexel.rgb )');
     expect(f).toContain('material.sheenColor = dcJellyHue( dcTexel.rgb );');
     expect(f.indexOf('material.sheenColor = dcJellyHue')).toBeGreaterThan(
@@ -156,7 +153,6 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
     const f = compiled({ inside: 'nebula' }).fragmentShader;
     expect(f).toContain('uniform float uDcResinGain;');
     expect(f).toContain('dcRefracted *= ( 1.0 - dcRFin ) * uDcResinGain;');
-    // after the inside is composited: the inside is lifted with the body
     expect(f.indexOf('dcRefracted = dcRefracted * ( 1.0 - dcIacc.a ) + dcIacc.rgb;')).toBeLessThan(
       f.indexOf('* uDcResinGain;'),
     );
@@ -177,7 +173,7 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
       'position',
       new THREE.Float32BufferAttribute([0.02, 0, 0, 0, 0.01, 0, 0, 0, 0.01], 3),
     );
-    onDiceFrame({ dice: other.dice, delta: 0 }, 0); // copied before its look was ever drawn
+    onDiceFrame({ dice: other.dice, delta: 0 }, 0);
     expect(other.dice.material.userData.uniforms.uDcLocalScale.value).toBeCloseTo(50, 4);
   });
 
@@ -220,19 +216,15 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
     expect(dice.material).not.toBe(look);
     expect(u.uInteriorTime.value).toBeCloseTo(0.05);
     expect(u.uInteriorSpin.value.length()).toBeGreaterThan(0);
-    // the look and the other dice of the look are untouched
     expect(look.userData.uniforms.uInteriorTime.value).toBe(0);
     expect(other.dice.material.userData.uniforms.uInteriorTime.value).toBe(0);
-    // rolling, then 5 s after the result: still moving
     onDiceResult({ dice }, 1000);
     onDiceFrame({ dice, delta: 0.016 }, 6000);
     expect(dice.material.userData.animated).toBe(true);
-    // past 10 s: at rest, no more frames asked for this die
     const t = u.uInteriorTime.value;
     onDiceFrame({ dice, delta: 0.016 }, 11500);
     expect(u.uInteriorTime.value).toBe(t);
     expect(dice.material.userData.animated).toBe(false);
-    // hit again: it moves again
     onDiceCollide({ dice }, 20000);
     expect(dice.material.userData.animated).toBe(true);
     onDiceFrame({ dice, delta: 0.016 }, 20016);

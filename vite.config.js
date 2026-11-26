@@ -7,9 +7,6 @@ import { glslMinifyPlugin } from './build/glsl-minify-plugin.js';
 // scripts/bundle-report.mjs sets this: sourcemaps that map minified bytes back to src/ files.
 const REPORT = process.env.BUNDLE_REPORT === '1';
 
-// Dicer v2 runs on Dice So Nice: three.js and DsN's API classes come from DsN's own files, never
-// a bundled copy (DsN note, section 2). Paths are relative to dist/, where every chunk sits:
-// Foundry serves modules/dicer/dist/ next to modules/dice-so-nice/.
 export const DSN_PATHS = {
   three: '../../dice-so-nice/libs/three.module.min.js',
   'dice-so-nice/api.js': '../../dice-so-nice/api.js',
@@ -48,7 +45,6 @@ export default defineConfig({
       // dist/dicer.js keeps the code (no facade re-exporting a hashed chunk) and also exports
       // what the lazy model-loader chunk shares with it.
       preserveEntrySignatures: 'allow-extension',
-      // three (ours and three/examples/jsm's) and DsN's api.js load from DsN's module folder
       external: Object.keys(DSN_PATHS),
       // The pet chunk (src/pet/chunk/pets.js) is named pet-*.js and the rolling-by-hand chunk
       // (src/hand/hand.js) hand-*.js, which build/world-start.js lists as lazy.
