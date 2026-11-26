@@ -69,6 +69,8 @@ export function normalizeTheme(raw, source = 'user', warn = console.warn) {
     ...(Object.keys(damage).length && { damage }),
     // a module dice set's system it was made from (Import as theme): its dice and shaders, in these colours
     ...(isStr(raw.system) && { system: raw.system }),
+    // a registered theme's `pets.volume` (0..1): scales the dice pets' voices for its rolls
+    ...(source === 'addon' && Number.isFinite(raw.pets?.volume) && { pets: { volume: Math.min(1, Math.max(0, raw.pets.volume)) } }),
   });
 }
 

@@ -331,3 +331,34 @@ describe('the cheer pose', () => {
     }
   });
 });
+
+describe("a theme's pet volume (petVolume on the dice)", () => {
+  const volumes = (m) => m.deps.playSound.mock.calls.map(([s]) => s.volume ?? 1);
+  /** u1 rolls `dice` (the same dice in flight and landed), the others resting; the voices' volumes. */
+  const roll = (m, dice, ghost = false) => {
+    const key = `v-${clockNow}`;
+    m.layer.begin(key, { spec: spec('u1', 'mimic', ghost), edge: 1, area: AREA, centre: () => ({ x: 0, z: 0 }), dice, hand: true });
+    runTo(m, clockNow + 800);
+    m.layer.landed(key, dice);
+    runTo(m, clockNow + 3000);
+    m.layer.leave(key, 0);
+    m.layer.end(key);
+    runTo(m, clockNow + 1500);
+    return volumes(m);
+  };
+
+  test('the quietest die of the roll sets the voices that answer it', () => {
+    const m = three();
+    const got = roll(m, [d20(20, { petVolume: 0.5 }), d20(20, { petVolume: 0.25 })]);
+    expect(got.length).toBeGreaterThan(0);
+    expect(Math.max(...got)).toBe(0.25);
+  });
+
+  test('a silent roll leaves nothing behind: the next one is at full volume', () => {
+    const m = three();
+    expect(roll(m, [d20(20, { petVolume: 0 })])).toEqual([]);
+    const got = roll(m, [d20(20)]);
+    expect(got.length).toBeGreaterThan(0);
+    expect(Math.min(...got)).toBe(1);
+  });
+});

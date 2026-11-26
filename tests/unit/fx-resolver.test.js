@@ -1,4 +1,5 @@
 import { onTestFinished } from 'vitest';
+import { ADDON_THEMES, normalizeTheme } from '../../src/themes/themes.js';
 import {
   createFxResolver,
   composeDecorateFor,
@@ -703,6 +704,24 @@ describe('theme sounds and celebrations (P5-D4)', () => {
     settings.effects = true;
     const out = decor(make())(term(), { result: 20, discarded: true }, 0, themed('dragon-hoard'));
     expect(out.fx).toBeUndefined();
+  });
+
+  test("a registered theme's pets.volume rides on its dice as petVolume, clamped; none without it", () => {
+    onTestFinished(() => ADDON_THEMES.delete('mod.q'));
+    const dieOf = (pets, source = 'addon') => {
+      const raw = { id: 'mod.q', name: 'Q', appearance: { body: { type: 'opaque', color: '#101010' } }, pets };
+      ADDON_THEMES.set(raw.id, normalizeTheme(raw, source));
+      return decor(make())(term(), res(5), 0, themed(raw.id));
+    };
+    expect(dieOf({ volume: 0 }).petVolume).toBe(0);
+    expect(dieOf({ volume: 0.33 }).petVolume).toBe(0.33);
+    expect(dieOf({ volume: 7 }).petVolume).toBe(1);
+    expect(dieOf(undefined).petVolume).toBeUndefined();
+    expect(dieOf({ volume: 'loud' }).petVolume).toBeUndefined();
+    expect(dieOf({ volume: 0 }, 'user').petVolume).toBeUndefined();
+    settings.effects = false;
+    expect(dieOf({ volume: 0 })?.petVolume).toBeUndefined();
+    settings.effects = true;
   });
 
   test('a theme rule with a new id adds to the world rules and fires after the roller rules', () => {

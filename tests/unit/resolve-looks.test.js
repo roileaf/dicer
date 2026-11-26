@@ -677,3 +677,58 @@ describe('the speaking token (an unlinked thrall token)', () => {
     expect(roll('t1', { dsnActorId: 'base' })).toEqual(DEFAULT_APPEARANCE); // the term names the base actor
   });
 });
+
+// Ember Lunar Dice: a roller may have their default dice follow Ember's moons (compat/installed-dice.js
+// puts moonRef on the registry once the dice are loaded)
+describe("a roller's default dice follow the moon (registry.moonRef)", () => {
+  const sets = async (registry) => {
+    await registry.addDicePreset({ type: 'd20', system: 'moon-cora', labels: [], modelFile: 'cora.glb' });
+    await registry.addDicePreset({ type: 'd20', system: 'pf2e', labels: [], modelFile: 'pf2e.glb' });
+    await registry.addDicePreset({ type: 'd6', system: 'pf2e', labels: [], modelFile: 'pf2e6.glb' });
+  };
+  test("the moon's set is their default system; their own look still colours what the set leaves", async () => {
+    const u = user({ global: { look: 'ruby-classic', system: 'pf2e' } });
+    const { registry, resolver } = make({ users: { u } });
+    await sets(registry);
+    expect(look(resolver, term(20), 'u').model).toBe('pf2e.glb');
+    registry.moonRef = vi.fn((who, looks) => who === u && (looks.global = { ...looks.global, system: 'moon-cora' }));
+    const out = look(resolver, term(20), 'u');
+    expect(out).toMatchObject({ model: 'cora.glb', system: 'moon-cora' });
+    expect(out.appearance).toBe(RUBY);
+    expect(registry.moonRef).toHaveBeenCalledWith(u, expect.any(Object));
+    // a user who never chose a look
+    const none = make({ users: { n: user(undefined) } });
+    await sets(none.registry);
+    none.registry.moonRef = (who, looks) => (looks.global = { ...looks.global, system: 'moon-cora' });
+    expect(look(none.resolver, term(20), 'n')).toMatchObject({ model: 'cora.glb', appearance: DEFAULT_APPEARANCE });
+  });
+  test('no moon up (null) leaves their own dice; dice they chose for a die type or an actor stay', async () => {
+    const u = user({ global: { look: 'ruby-classic' }, d6: { system: 'pf2e' } });
+    const actors = { a: { flags: { dicer: { appearance: { global: { system: 'pf2e' } } } } } };
+    const { registry, resolver } = make({ users: { u }, actors });
+    await sets(registry);
+    registry.moonRef = () => null;
+    expect(look(resolver, term(20), 'u').model).toBeUndefined();
+    registry.moonRef = (who, looks) => (looks.global = { ...looks.global, system: 'moon-cora' });
+    expect(look(resolver, term(6), 'u').model).toBe('pf2e6.glb');
+    expect(look(resolver, term(20, { options: { dsnActorId: 'a' } }), 'u').model).toBe('pf2e.glb');
+  });
+  test("under the GM's lock on player looks the moon is not asked", async () => {
+    const u = user({ global: { look: 'ruby-classic' } });
+    const { registry, resolver } = make({ users: { u }, worldDefault: 'obsidian', lock: true });
+    await sets(registry);
+    registry.moonRef = vi.fn(() => 'moon-cora');
+    expect(look(resolver, term(20), 'u').model).toBeUndefined();
+    expect(registry.moonRef).not.toHaveBeenCalled();
+  });
+  test('a moonRef that throws never reaches the roll: the die gets the default look, warned once', async () => {
+    const u = user({ global: { look: 'ruby-classic' } });
+    const { registry, resolver, warn } = make({ users: { u } });
+    registry.moonRef = () => {
+      throw new Error('boom');
+    };
+    expect(look(resolver, term(20), 'u').appearance).toBe(DEFAULT_APPEARANCE);
+    expect(look(resolver, term(6), 'u').appearance).toBe(DEFAULT_APPEARANCE);
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+});

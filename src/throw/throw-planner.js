@@ -6,7 +6,7 @@ import { FATE_FACES } from '../compat/faces.js';
  * @typedef {{ key: string, labels: FaceLabel[] }} FaceSet indexed like getShape(type).values
  * @typedef {{ type: string, value: number, variant?: 'd100tens'|'dF'|'dc'|'d3'|'d5'|'d7', appearance?: object,
  *   faces?: FaceSet, ghost?: boolean, model?: string,
- *   fx?: import('../effects/fx-resolver.js').Fx[], damageType?: string, trail?: 0|1|2,
+ *   fx?: import('../effects/fx-resolver.js').Fx[], damageType?: string, trail?: 0|1|2, petVolume?: number,
  *   key?: string, free?: true, shapeType?: string }} DieSpec
  *   `fx` and `damageType` are result-dependent: set only for real views (never on a ghost).
  *   `key` is 'term:result:part' (planThrow). `free`: physics decides the face (never forced).

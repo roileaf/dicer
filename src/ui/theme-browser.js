@@ -322,6 +322,20 @@ export async function setSetFx(system, on) {
   return true;
 }
 
+/** The user flag of a player whose default dice follow Ember's moons (compat/installed-dice.js). */
+const MOON_DICE = 'moonDice';
+
+/** Whether this user's default dice follow Ember's moons. */
+export const moonDiceOn = () => me()?.getFlag?.(MODULE, MOON_DICE) === true;
+
+/** Has this user's default dice follow Ember's moons, or not. */
+export async function setMoonDice(on) {
+  const user = me();
+  if (!user) return false;
+  await user.setFlag(MODULE, MOON_DICE, on === true);
+  return true;
+}
+
 /** Stops using the module system of the global slot (its look stays). */
 export async function stopModuleSystem(entry) {
   const user = me();
@@ -497,6 +511,7 @@ export class ThemeBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
       useModule: ThemeBrowser.#onUseModule,
       stopModule: ThemeBrowser.#onStopModule,
       setFx: ThemeBrowser.#onSetFx,
+      moonDice: ThemeBrowser.#onMoonDice,
       importModule: ThemeBrowser.#onImportModule,
       openPet: ThemeBrowser.#onOpenPet,
       openTray: ThemeBrowser.#onOpenTray,
@@ -692,6 +707,9 @@ export class ThemeBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
         // a set that brings its own natural 20 / natural 1 effects: this user may turn them off
         setFx: isModule && t.kind === 'system' && setRules.has?.(t.key) === true,
         setFxOn: isModule && setFxOn(t.key),
+        // a moon's dice set (Ember Lunar Dice): this user's default dice may follow the moons
+        moonDice: isModule && t.kind === 'system' && setRules.moonSet?.(t.key) === true,
+        moonDiceOn: isModule && moonDiceOn(),
         swatch: t.appearance?.body?.color ?? '#444',
         selected: t.id === this.#selected,
         section: sectionOf.get(t.id) ?? '',
@@ -1026,6 +1044,12 @@ export class ThemeBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
   static async #onSetFx(event, target) {
     const entry = ThemeBrowser.#themeOf(this, target);
     if (entry?.source !== 'module' || !(await setSetFx(entry.key, target.checked))) return;
+    await this.render();
+  }
+
+  static async #onMoonDice(event, target) {
+    const entry = ThemeBrowser.#themeOf(this, target);
+    if (entry?.source !== 'module' || this.#locked || !(await setMoonDice(target.checked))) return;
     await this.render();
   }
 

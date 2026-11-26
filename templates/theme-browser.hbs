@@ -69,6 +69,12 @@
             {{localize "DICER.Themes.Module.SetFx"}}
           </label>
         {{/if}}
+        {{#if detail.moonDice}}
+          <label class="dicer-check dicer-moon-dice" data-tooltip="DICER.Themes.Module.MoonDiceHint">
+            <input type="checkbox" data-action="moonDice" data-theme="{{detail.id}}"{{#if detail.moonDiceOn}} checked{{/if}}{{#if locked}} disabled{{/if}}>
+            {{localize "DICER.Themes.Module.MoonDice"}}
+          </label>
+        {{/if}}
         {{#if locked}}
           <p class="dicer-muted dicer-locked"><i class="fa-solid fa-lock"></i> {{lockedNotice}}</p>
         {{else}}

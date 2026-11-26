@@ -9,6 +9,8 @@ import {
   scanInstalled,
   runDice,
   loadInstalledDice,
+  moonSystemFor,
+  followEmberMoons,
   isLoaded,
   resetLoaded,
 } from '../../src/compat/installed-dice.js';
@@ -169,4 +171,54 @@ test("Ember Lunar Dice loaded as a plain dice set follow Ember's moons too: at o
   expect(api.uniforms.moonPhase).toEqual({ ignis: { value: true }, aqua: { value: false } });
   for (const fn of events['ember.lunarPhaseChange'] ?? []) fn({ changed: ['ignis', 'aqua'], phases: { ignis: 'waning', aqua: 'full' } });
   expect(api.uniforms.moonPhase).toEqual({ ignis: { value: false }, aqua: { value: true } });
+});
+
+// "My dice follow Ember's moons": the set of the moon with the most influence right now
+const moonUser = (on) => ({ getFlag: (s, k) => (s === 'dicer' && k === 'moonDice' ? on : undefined) });
+const sky = (influences) => ({
+  moons: Object.fromEntries(Object.entries(influences).map(([id, at]) => [id, { id, influence: -1, animate: (t) => ({ influence: at(t) }) }])),
+});
+
+test("a player who follows the moons rolls the set of the moon with the most influence at the world's time", () => {
+  const calendar = () => sky({ cora: (t) => (t === 5 ? 0.3 : 0.9), aura: () => 0.6, akon: () => 0 });
+  const has = (id) => id !== 'trs-ember-none-dice-set';
+  const deps = { calendar, has, now: () => 5 };
+  expect(moonSystemFor(moonUser(true), deps)).toBe('trs-ember-aura-dice-set');
+  expect(moonSystemFor(moonUser(true), { ...deps, now: () => 6 })).toBe('trs-ember-cora-dice-set');
+  // not asked for: their own dice
+  expect(moonSystemFor(moonUser(false), deps)).toBeNull();
+  expect(moonSystemFor(moonUser(undefined), deps)).toBeNull();
+  expect(moonSystemFor(null, deps)).toBeNull();
+});
+
+test('no moon in the sky, a moon whose set is not loaded, or no Ember: their own dice', () => {
+  const has = (id) => id === 'trs-ember-cora-dice-set';
+  expect(moonSystemFor(moonUser(true), { calendar: () => sky({ cora: () => 0, aura: () => 0 }), has, now: () => 1 })).toBeNull();
+  expect(moonSystemFor(moonUser(true), { calendar: () => sky({ cora: () => 0.2, aura: () => 0.9 }), has, now: () => 1 })).toBe('trs-ember-cora-dice-set');
+  expect(moonSystemFor(moonUser(true), { calendar: () => undefined, has, now: () => 1 })).toBeNull();
+  expect(moonSystemFor(moonUser(true), { calendar: () => { throw new Error('x'); }, has, now: () => 1 })).toBeNull();
+  // a moon without Ember's animate(): its current influence
+  const plain = () => ({ moons: { cora: { id: 'cora', influence: 0.4 } } });
+  expect(moonSystemFor(moonUser(true), { calendar: plain, has, now: () => 1 })).toBe('trs-ember-cora-dice-set');
+});
+
+test('once Ember Lunar Dice are loaded the look resolver can ask the moon (registry.moonRef), and the theme browser offers it', async () => {
+  const { setRules } = await import('../../src/effects/rules.js');
+  const hooks = { on() {}, once() {} };
+  const systems = new Map([['trs-ember-cora-dice-set', {}]]);
+  const api = { uniforms: {}, _registry: { systems } };
+  followEmberMoons({ hooks, dice3d: api, calendar: () => sky({ cora: () => 0.5 }), time: () => 1 });
+  expect(api._registry.moonRef(moonUser(true))).toBe('trs-ember-cora-dice-set');
+  expect(api._registry.moonRef(moonUser(false))).toBeNull();
+  // the resolver hands the roller's looks: the moon's set becomes their default system, their look stays
+  const looks = { global: { theme: 'verdant', system: 'pf2e' }, d6: { system: 'pf2e' } };
+  api._registry.moonRef(moonUser(true), looks);
+  expect(looks).toEqual({ global: { theme: 'verdant', system: 'trs-ember-cora-dice-set' }, d6: { system: 'pf2e' } });
+  const own = { global: { theme: 'verdant' } };
+  api._registry.moonRef(moonUser(false), own);
+  expect(own).toEqual({ global: { theme: 'verdant' } });
+  expect(setRules.moonSet('trs-ember-cora-dice-set')).toBe(true);
+  expect(setRules.moonSet('trs-marble')).toBe(false);
+  resetLoaded();
+  expect(setRules.moonSet).toBeUndefined();
 });

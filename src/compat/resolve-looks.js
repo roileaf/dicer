@@ -13,6 +13,8 @@
  * The GM's world default theme (worldDefaultTheme) is the fallback after the roller's own refs
  * and before DEFAULT_APPEARANCE; with lockPlayerLooks on, a non-GM roller's refs and actor flags
  * are skipped and the world default is used instead (P7-D4).
+ * A roller who has their dice follow Ember's moons (registry.moonRef) gets the moon's dice set as
+ * the system of their global ref (rule 5: moonRef(user, looks) writes it); refs for a die type, a role or an actor are untouched.
  * A registered preset for the ref's system replaces rules 5-6 (its colorset) and attaches its
  * model. Everything read here is third-party data: no step may throw.
  */
@@ -170,6 +172,9 @@ export function createLookResolver({
     const looks = ctx.locked ? {} : readUserLooks(ctx.user, { fill: false });
     // A mirrored "never chose" default is no choice: the world default may apply.
     if (isNeverChose(looks.global)) delete looks.global;
+    // A roller whose default dice follow Ember's moons (installed-dice.js sets registry.moonRef once
+    // Ember Lunar Dice are loaded): it puts the moon's set in their global ref; their look stays.
+    if (!ctx.locked) registry.moonRef?.(ctx.user, looks);
     const shape = type ? registry.baseShape?.(type) : null;
     const keys = [role ? `role:${role}` : null, type, shape, 'global'];
     const refs = keys.map((key) => (key && Object.hasOwn(looks, key) ? looks[key] : null)).filter(Boolean);

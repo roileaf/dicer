@@ -192,6 +192,12 @@ export function createFxResolver({
       const themed = new Map();
       // A module dice set's own natural 20 / natural 1 effects (rules.js setRules) count as its
       // theme's rules, over the theme's own of the same id.
+      const petVolumes = new Map(); // themeId -> its pets.volume
+      const petVolumeOf = (themeId) => {
+        if (!themeId) return undefined;
+        if (!petVolumes.has(themeId)) petVolumes.set(themeId, themeById(themeId, rollerId)?.pets?.volume);
+        return petVolumes.get(themeId);
+      };
       const rulesOf = (themeId, system) => {
         if (!(fxOn || macros)) return rules;
         const key = themeId + system;
@@ -213,6 +219,10 @@ export function createFxResolver({
 
       return (term, result, termIndex, look) => {
         const out = {};
+        // The theme's pet volume (registerTheme's `pets.volume`), only where this viewer gets the theme's
+        // effects: whoever hears no theme sound keeps the pets as they are.
+        const petVol = fxOn ? petVolumeOf(look?.themeSource === 'viewer' ? undefined : look?.themeId) : undefined;
+        if (petVol !== undefined) out.petVolume = petVol;
         const damageType = isObj(term) ? damage.get(term) : undefined;
         if (presets && typeof damageType === 'string') out.damageType = damageType;
         const theme = fxOn && themeOf ? safe(() => themeOf(term, termIndex), null) : null;

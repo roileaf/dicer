@@ -23,6 +23,41 @@ const OTHER_WORK =
 const DSN_ID = 'dice-so-nice';
 const SKIP = new Set(['dicer', DSN_ID]);
 const LUNAR_DICE = 'ember-lunar-dice';
+const MOON_SET = /^trs-ember-[\w-]+-dice-set$/; // Ember Lunar Dice's system ids, a moon each
+const emberCalendar = () => globalThis.ember?.calendar ?? globalThis.game?.time?.calendar;
+
+/** The user flag of a player whose default dice follow Ember's moons (the theme browser's box). */
+export const MOON_DICE = 'moonDice';
+
+/**
+ * The dice set a player's default dice are right now, when they follow Ember's moons (their
+ * `dicer.moonDice` flag): the set of the moon with the most influence at the world's time (Ember's
+ * own measure: 0 below the horizon, 1 at its height, "full" above 0.75), among the sets that are
+ * loaded (`has(systemId)`). Null when they do not follow the moons, no moon is up, or without
+ * Ember: their own dice. Worked out from the world time, not from Ember's animated sky, so every
+ * client gives the same set for the same roll. Never throws.
+ */
+export function moonSystemFor(user, { calendar = emberCalendar, has = () => true, now = () => globalThis.game?.time?.worldTime } = {}) {
+  try {
+    if (user?.getFlag?.('dicer', MOON_DICE) !== true) return null;
+    const moons = calendar()?.moons;
+    if (!moons || typeof moons !== 'object') return null;
+    const t = now();
+    let best = null;
+    let top = 0;
+    for (const moon of Object.values(moons)) {
+      const id = `trs-ember-${moon?.id}-dice-set`;
+      const influence = typeof moon?.animate === 'function' ? moon.animate(t)?.influence : moon?.influence;
+      if (influence > top && has(id)) {
+        top = influence;
+        best = id;
+      }
+    }
+    return best;
+  } catch {
+    return null;
+  }
+}
 // an ES module that imports its own files (an add-on's dice may be added there, not in its entry)
 const IMPORTS_OWN = /(?:^|[;\n])\s*import\s[^;]*?from\s*(['"])\.{1,2}\//;
 // a dynamic import of another module's script (`import(\`/modules/<id>/index.js\`)`, or a path constant)
@@ -620,8 +655,19 @@ export function shimDsn(dice3d) {
  * a plain dice set loads after the announcement; else at the announcement), then at each
  * `ember.lunarPhaseChange`. Without Ember (`calendar()` has no moons) nothing is set.
  */
-export function followEmberMoons({ hooks, dice3d, calendar }) {
-  const cal = calendar ?? (() => globalThis.ember?.calendar ?? globalThis.game?.time?.calendar);
+export function followEmberMoons({ hooks, dice3d, calendar, time }) {
+  const cal = calendar ?? emberCalendar;
+  // "My dice follow Ember's moons" (a user's dicer.moonDice flag): the look resolver asks the
+  // registry which set a roller's default dice are right now, the theme browser which sets offer it
+  const registry = dice3d?._registry;
+  if (registry) {
+    registry.moonRef = (user, looks) => {
+      const system = moonSystemFor(user, { calendar: cal, now: time, has: (id) => registry.systems?.has?.(id) === true });
+      if (system && looks) looks.global = { ...looks.global, system };
+      return system;
+    };
+  }
+  setRules.moonSet = (system) => MOON_SET.test(system);
   const set = (phases) => {
     const mp = dice3d?.uniforms?.moonPhase;
     if (!mp || typeof mp !== 'object' || !phases || typeof phases !== 'object') return;
@@ -732,6 +778,7 @@ export const resetLoaded = () => {
   loaded.clear();
   delete setRules.of;
   delete setRules.has;
+  delete setRules.moonSet;
   sets.clear();
   modes.clear();
 };

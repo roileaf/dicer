@@ -1199,6 +1199,13 @@ export function createPetLayer(deps) {
     return pet;
   }
 
+  /** The quietest `petVolume` among a roll's dice (a theme's pets.volume), or 1 when none sets one. */
+  const themeVolumeOf = (dice) => {
+    let v = 1;
+    for (const d of dice ?? []) if (typeof d?.petVolume === 'number') v = Math.min(v, d.petVolume);
+    return v;
+  };
+
   /**
    * A roll with a pet begins (PetHook.begin). `hand` (H-5): a hand throw, with no throw pose; its
    * edge is the hand edge. A pet alignFor put at the thrower's spot watches from there.
@@ -1262,7 +1269,7 @@ export function createPetLayer(deps) {
     pet.leaveAt = null; // its idle time starts again when this roll ends
     pet.spot = null;
     pet.area = { ...area }; // the owner's resting area: that of their most recent roll
-    pet.rolls.set(key, { ghost: !!spec.ghost, summary: null, consumed: false });
+    pet.rolls.set(key, { ghost: !!spec.ghost, summary: null, consumed: false, volume: themeVolumeOf(dice) });
     keyOwner.set(key, spec.userId);
     // The newest roll (pet.current) owns the throw, the place and the leave; each roll keeps its
     // own ghost flag and summary for the merged reaction.
@@ -1317,14 +1324,17 @@ export function createPetLayer(deps) {
     if (pet.track.landedAt != null) return;
     const summaries = [];
     let ghostOnly = true;
+    let volume = 1;
     for (const r of pet.rolls.values()) {
       if (r.consumed) continue;
       if (!r.summary) return;
       summaries.push(r.summary);
       ghostOnly &&= r.ghost;
+      volume = Math.min(volume, r.volume);
     }
     for (const r of pet.rolls.values()) r.consumed = true;
     pet.reaction = merge(summaries);
+    pet.reactVolume = volume;
     pet.reactGhost = summaries.length > 0 && ghostOnly; // only blind rolls: nothing to voice
     pet.soundDone = false;
     pet.track.landedAt = clock();
@@ -1348,6 +1358,7 @@ export function createPetLayer(deps) {
       return;
     }
     roll.summary = summarize(dice, roll.ghost); // a ghost roll only ever says 'plain'
+    roll.volume = themeVolumeOf(dice); // before settle, which reads it
     const wasWatching = watching(pet); // before settle: its landing turns the watch into the reaction
     settle(pet);
     landCatch(pet); // a caught natural 20 is spat out first; the reaction (and the cheer) waits
@@ -1367,9 +1378,12 @@ export function createPetLayer(deps) {
         pet.pz = pet.base.z;
         pet.hop = 0;
         pet.idleAt = now;
-        react(pet, element, now);
+        react(pet, element, now, themeVolumeOf(dice));
         wake();
-      } else pet.elementAfter = element;
+      } else {
+        pet.elementAfter = element;
+        pet.elementAfterVolume = themeVolumeOf(dice);
+      }
     }
     elemental(dice, roller ? cheer(dice, roller, pet) : null);
   }
@@ -1410,7 +1424,7 @@ export function createPetLayer(deps) {
       dropAnim(pet);
       const px = pet.px ?? pet.base.x;
       const pz = pet.pz ?? pet.base.z;
-      pet.anim = { kind: 'cheer', at, calm: calmNow(), yaw: pet.yaw ?? 0, to: Math.atan2(x - px, z - pz) };
+      pet.anim = { kind: 'cheer', at, calm: calmNow(), yaw: pet.yaw ?? 0, to: Math.atan2(x - px, z - pz), volume: themeVolumeOf(dice) };
       pet.idleAt = now;
       cheering.add(pet);
     }
@@ -1464,7 +1478,7 @@ export function createPetLayer(deps) {
     // on the tray's rim the dice never land beside a pet: it reacts to the nearest one anywhere
     const dieWidth = perch() ? Infinity : DIE_WIDTH;
     for (const { pet, element } of elementReactions(dice, near, { dieWidth })) {
-      react(pet, element, now);
+      react(pet, element, now, themeVolumeOf(dice));
       any = true;
     }
     if (any) wake();
@@ -1478,7 +1492,7 @@ export function createPetLayer(deps) {
     return pet.state === 'routine' && !pet.gone && !pet.wobble && phaseAt(pet.track, clock()).phase === 'watch';
   }
   /** `pet` reacts to `element` (reactions.js reactionOf): the anim replaces whatever it was doing. */
-  function react(pet, element, now) {
+  function react(pet, element, now, volume) {
     dropAnim(pet); // a shiver's tint or a scorch's smoke cut short by the next reaction
     const kind = reactionOf(element);
     pet.anim = { kind, at: now, calm: calmNow(), element };
@@ -1486,7 +1500,7 @@ export function createPetLayer(deps) {
     const fx = ELEMENT_FX[element];
     if (fx?.smoke || fx?.puffs) pet.anim.top = new THREE.Box3().setFromObject(pet.creature.root).max.y - pet.group.position.y;
     pet.idleAt = now; // a startled pet does not wander off just then
-    voice(pet, fx?.sound ?? 'petYelp');
+    voice(pet, fx?.sound ?? 'petYelp', volume);
   }
 
   /**
@@ -1591,7 +1605,7 @@ export function createPetLayer(deps) {
     // watching its dice fly: a curious "oooh", once per roll (not a ghost roll's: no suspense to share)
     if (phase === 'watch' && pet.oohDone === false && !pet.rolls.get(pet.current)?.ghost) {
       pet.oohDone = true;
-      voice(pet, 'petOooh');
+      voice(pet, 'petOooh', pet.rolls.get(pet.current)?.volume);
     }
     if (phase === 'react' && !pet.soundDone) {
       pet.soundDone = true;
@@ -1600,7 +1614,7 @@ export function createPetLayer(deps) {
       // a plain roll that leaves an element on it voices the element, not the "mm-hm"
       const name =
         pet.reaction === 'plain' && el ? (ELEMENT_FX[el]?.sound ?? 'petYelp') : reactionSound(pet.reaction, !!pet.reactGhost);
-      voice(pet, name);
+      voice(pet, name, pet.reactVolume);
     }
   }
 
@@ -1672,7 +1686,7 @@ export function createPetLayer(deps) {
     const element = pet.elementAfter;
     pet.elementAfter = null;
     if (element && getSetting('petElemental') !== false) {
-      react(pet, element, clock()); // its roll's element, now it is back at its spot
+      react(pet, element, clock(), pet.elementAfterVolume); // its roll's element, now it is back at its spot
       wake();
     }
   }
@@ -1748,7 +1762,7 @@ export function createPetLayer(deps) {
   }
   /** `pet` says `name` (a builtin pet sound) in its pitch, unless pet sounds or sounds are off. Never throws. */
   const said = new Map(); // userId -> the take each voice last played (voice)
-  function voice(pet, name) {
+  function voice(pet, name, scale = 1) {
     try {
       if (!name || getSetting('petSounds') === false || getSetting('sounds') === false) return;
       const all = TAKES[name];
@@ -1759,7 +1773,8 @@ export function createPetLayer(deps) {
         name = last[name] = pick[Math.min(pick.length - 1, Math.floor(rand() * pick.length))];
       }
       const v = Number(getSetting('petVolume') ?? 1);
-      const volume = Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1;
+      // `scale`: the pets.volume of the dice theme whose roll this voice answers (1 for the rest)
+      const volume = (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1) * scale;
       if (volume > 0) playSound({ builtin: name, rate: rateOf(pet), voice: voiceFor(pet.kind, name), volume });
     } catch {
       /* no sound */
@@ -1897,7 +1912,7 @@ export function createPetLayer(deps) {
       pet.yaw = wrap(a.yaw + wrap(a.to - a.yaw) * (smooth(clamp01(e / 0.2)) - smooth(clamp01((e - 0.8) / 0.2))));
       if (a.chirp && now >= a.at) {
         a.chirp = false;
-        voice(pet, 'petHappy');
+        voice(pet, 'petHappy', a.volume);
       }
     }
     show(pet, now, a.kind, e, pet.px, pet.pz, 0, shadows);
@@ -2100,7 +2115,7 @@ export function createPetLayer(deps) {
       const dir = len > 1e-6 ? [(p.x - from.x) / len, (p.z - from.z) / len] : [0, 1];
       die.borrowed = true; // nothing else (a crit scene, grab and toss) takes it meanwhile
       pet.catch = { die, phase: 'dash', at: now, from, dir, ms: dashMs(len), saved: null, rest: null };
-      voice(pet, 'petYip');
+      voice(pet, 'petYip', pet.rolls.get(pet.current)?.volume);
       wake();
       return true;
     }
@@ -2163,7 +2178,7 @@ export function createPetLayer(deps) {
         c.saved = hideDie(die);
         c.phase = 'carry';
         c.at = now;
-        voice(pet, 'petBleh');
+        voice(pet, 'petBleh', pet.rolls.get(pet.current)?.volume);
       }
       return true;
     }
@@ -2569,7 +2584,7 @@ export function createPetLayer(deps) {
     if (element) {
       // the same element going on (a second die of the roll, a bounce) does not restart it
       if (pet.anim?.element !== element) {
-        react(pet, element, now);
+        react(pet, element, now, info.die.petVolume);
         wake();
       }
       return;

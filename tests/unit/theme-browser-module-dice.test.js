@@ -335,6 +335,27 @@ describe('the theme browser with module dice', () => {
     expect(flags.appearance.global).toMatchObject({ theme: 'obsidian', system: null, colorset: null });
   });
 
+  it("a moon's dice set (Ember Lunar Dice) offers 'my dice follow Ember's moons'; ticking it sets the user's flag", async () => {
+    const { setRules } = await import('../../src/effects/rules.js');
+    setRules.moonSet = (system) => system === 'trs-marble';
+    try {
+      const app = make();
+      await showModules(app);
+      await actions.select.call(app, {}, { closest: () => ({ dataset: { theme: 'dsn-system:trs-marble' } }) });
+      expect((await app._prepareContext()).detail).toMatchObject({ moonDice: true, moonDiceOn: false });
+      await actions.moonDice.call(app, {}, { ...button('dsn-system:trs-marble'), checked: true });
+      expect(flags.moonDice).toBe(true);
+      expect((await app._prepareContext()).detail).toMatchObject({ moonDice: true, moonDiceOn: true });
+      await actions.moonDice.call(app, {}, { ...button('dsn-system:trs-marble'), checked: false });
+      expect(flags.moonDice).toBe(false);
+      // any other set (or a colour set) shows none
+      await actions.select.call(app, {}, { closest: () => ({ dataset: { theme: 'dsn-colorset:trs-black' } }) });
+      expect((await app._prepareContext()).detail.moonDice).toBe(false);
+    } finally {
+      delete setRules.moonSet;
+    }
+  });
+
   it("a set with its own natural 20 / natural 1 effects shows a toggle; turning it off lists the set in the user's flag", async () => {
     const { setRules } = await import('../../src/effects/rules.js');
     setRules.has = (system) => system === 'trs-marble';
