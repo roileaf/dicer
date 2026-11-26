@@ -1554,7 +1554,9 @@
         "gem": "Gemstone (Dicer)",
         "wood": "Wood (Dicer)",
         "stone": "Stone (Dicer)",
-        "bone": "Bone (Dicer)"
+        "bone": "Bone (Dicer)",
+        "resin": "Clear resin (Dicer)",
+        "jelly": "Jelly (Dicer)"
       }
     }
   }

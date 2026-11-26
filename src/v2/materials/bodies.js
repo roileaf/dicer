@@ -28,12 +28,37 @@ import { MARBLE_COLOR, PEARL_COLOR, VEIN_SCALE } from '../../render/shaders/bodi
 import { NOISE_GLSL } from '../../render/shaders/noise.js';
 import { diceSoundSetId, MODULE_ID } from '../sounds/register.js';
 
-/** DsN's d6 edge on the board, in metres (SceneConstants.TARGET_D6_EDGE_METERS). */
-const DSN_D6_EDGE = 0.016;
-/** v1's d6 edge: its vertices have unit circumradius, (1, 1, 1) / sqrt(3). */
-const V1_D6_EDGE = 2 / Math.sqrt(3);
-/** DsN metres to v1 die-local units (showcase dice are 1.2x bigger: their pattern is too). */
-export const LOCAL_SCALE = V1_D6_EDGE / DSN_D6_EDGE;
+/**
+ * DsN metres to v1 die-local units. v1's dice have unit circumradius; a DsN die's size follows
+ * the screen on the board (DiceFactory.baseScale) and is another one in pictures and previews,
+ * so the factor is 1 / the circumradius of the geometry being drawn: the uniform uDcLocalScale,
+ * set by trackLocalScale() before each draw. LOCAL_SCALE is its value until then (a d6 preview).
+ */
+export const LOCAL_SCALE = 60;
+const radii = new WeakMap();
+/** 1 / the farthest vertex of a geometry from its origin (kept per geometry). */
+export function localScaleOf(geometry) {
+  let r = radii.get(geometry);
+  if (r === undefined) {
+    const p = geometry?.attributes?.position;
+    let max = 0;
+    for (let i = 0; i < (p?.count ?? 0); i++)
+      max = Math.max(max, Math.hypot(p.getX(i), p.getY(i), p.getZ(i)));
+    r = max > 0 ? 1 / max : LOCAL_SCALE;
+    if (geometry) radii.set(geometry, r);
+  }
+  return r;
+}
+/**
+ * Keeps a look's uDcLocalScale at the size of the die it draws (a look's material is one die
+ * type at one size). A die's own copy (isolateMaterial) starts from the look's value.
+ */
+export function trackLocalScale(mat) {
+  mat.onBeforeRender = function (_renderer, _scene, _camera, geometry) {
+    const u = this.userData.uniforms?.uDcLocalScale;
+    if (u) u.value = localScaleOf(geometry);
+  };
+}
 
 /** v1 keeps a hairline coat on metal so an enamel fill can gloss: the same program shape. */
 const METAL_COAT = 0.001;
@@ -109,18 +134,19 @@ const color2Default = (type) =>
 
 // --- shader ----------------------------------------------------------------------------------
 
-const after = (src, anchor, code) =>
+export const after = (src, anchor, code) =>
   src.replace(`#include <${anchor}>`, `#include <${anchor}>\n${code}`);
 
-const VERTEX_PARS = /* glsl */ `
+export const VERTEX_PARS = /* glsl */ `
 varying vec3 vLocalPos;
+uniform float uDcLocalScale;
 `;
-const VERTEX = /* glsl */ `
-	vLocalPos = transformed * ${LOCAL_SCALE.toFixed(4)};
+export const VERTEX = /* glsl */ `
+	vLocalPos = transformed * uDcLocalScale;
 `;
 
 /** What v1's body GLSL reads that a DsN die does not have (see the head of this file). */
-const FRAGMENT_PARS = /* glsl */ `
+export const FRAGMENT_PARS = /* glsl */ `
 varying vec3 vLocalPos;
 uniform vec3 uBodyColor2;
 #define vFaceId 0.0
@@ -131,14 +157,14 @@ float dcBorderH( float e ) { return 0.0; }
 `;
 
 /** After color_fragment: the labels (DsN's emissive map) before the body is drawn. */
-const LABEL_MASK = /* glsl */ `
+export const LABEL_MASK = /* glsl */ `
 	vec4 dcTexel = diffuseColor;
 	float dcMask = 0.0;
 #ifdef USE_EMISSIVEMAP
 	dcMask = smoothstep( 0.02, 0.2, texture2D( emissiveMap, vEmissiveMapUv ).r );
 #endif
 `;
-const LABEL_RESTORE = /* glsl */ `
+export const LABEL_RESTORE = /* glsl */ `
 	diffuseColor.rgb = mix( diffuseColor.rgb, dcTexel.rgb, dcMask );
 `;
 
@@ -219,7 +245,7 @@ export function patchBodyShader(shader, glsl) {
 
 // DsN localizes a material's name, not its settings' names and options: Dicer does (the hook
 // runs once Foundry's translations are loaded)
-const L = (k) =>
+export const L = (k) =>
   globalThis.game?.i18n?.localize(`DICER.Appearance.${k}`) ?? `DICER.Appearance.${k}`;
 
 /** The DiceMaterial of one body type (not registered). */
@@ -243,6 +269,7 @@ export function createBodyMaterial(DiceMaterial, type) {
   for (const [name, { value }] of Object.entries(patch?.uniforms ?? {}))
     material.addUniform(name, value);
   if (type === 'marble') material.addUniform('uVeinScale', VEIN_SCALE);
+  material.addUniform('uDcLocalScale', LOCAL_SCALE);
 
   if (presets.length)
     material.addSettingSelect({
@@ -287,6 +314,7 @@ export function createBodyMaterial(DiceMaterial, type) {
 
 /** Puts a look's material settings on its three.js material and uniforms. */
 export function applySettings(type, mat, settings) {
+  trackLocalScale(mat);
   const u = mat.userData.uniforms ?? {};
   const presets = presetsOf(type);
   const preset = presets.includes(settings.preset) ? settings.preset : presets[0];

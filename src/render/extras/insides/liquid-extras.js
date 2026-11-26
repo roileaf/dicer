@@ -178,8 +178,10 @@ vec4 dcInterior( vec3 p, vec3 rd, float dt ) {
 }
 `;
 
-const CORE_FROM = "// today's liquid core";
-const CORE_TO = "// the bubble's front surface";
+// Code, not comments: the build strips the comments of GLSL templates (build/glsl-minify-plugin.js),
+// and anchors on them were missing in every built bundle.
+const CORE_FROM = 'vec4 dcLqLiquid(';
+const CORE_TO = 'vec4 dcLqBubble(';
 
 /**
  * The body with insideMotion: every dcIUp is the lagged up, and the still core (dcLqLiquid) is

@@ -2,16 +2,31 @@ import { readFileSync } from 'node:fs';
 import { FloatType, Vector3 } from 'three';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { describe, expect, it, vi } from 'vitest';
-import { bake, directionOf, encodeHdr, OUT, radiance, rgbe, studioPanels } from '../../scripts/bake-studio-hdr.mjs';
+import {
+  bake,
+  directionOf,
+  encodeHdr,
+  OUT,
+  radiance,
+  rgbe,
+  studioPanels,
+} from '../../scripts/bake-studio-hdr.mjs';
 import { registerLighting, STUDIO_ENVIRONMENT } from '../../src/v2/lighting.js';
 
-const parse = (buf) => new HDRLoader().setDataType(FloatType).parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+const parse = (buf) =>
+  new HDRLoader()
+    .setDataType(FloatType)
+    .parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
 
 describe('v2 studio lighting (DsN 5.3)', () => {
   it('registers the studio environment under a dicer id', () => {
     const dice3d = { addEnvironment: vi.fn() };
     expect(registerLighting(dice3d)).toBe('dicer.studio');
-    expect(dice3d.addEnvironment).toHaveBeenCalledWith({ id: 'dicer.studio', name: 'DICER.V2.Ambiance.studio', src: 'modules/dicer/assets/lighting/dicer-studio.hdr' });
+    expect(dice3d.addEnvironment).toHaveBeenCalledWith({
+      id: 'dicer.studio',
+      name: 'DICER.V2.Ambiance.studio',
+      src: 'modules/dicer/assets/lighting/dicer-studio.hdr',
+    });
   });
 
   it('registers the environment before anything else, synchronously, in diceSoNiceReady', async () => {
@@ -22,7 +37,7 @@ describe('v2 studio lighting (DsN 5.3)', () => {
       addSurface: () => {},
       addMaterial: () => Promise.resolve(),
     };
-    vi.stubGlobal('Hooks', { once: vi.fn() });
+    vi.stubGlobal('Hooks', { once: vi.fn(), on: vi.fn() });
     const { onDiceSoNiceReady } = await import('../../src/v2/main.js');
     expect(onDiceSoNiceReady(dice3d)).toBeUndefined(); // DsN calls the hook with Hooks.call
     expect(order[0]).toBe('environment');
@@ -49,7 +64,11 @@ describe('v2 studio lighting (DsN 5.3)', () => {
   });
 
   it('directionOf inverts three`s equirect mapping', () => {
-    for (const [u, v] of [[0.1, 0.2], [0.7, 0.9], [0.5, 0.5]]) {
+    for (const [u, v] of [
+      [0.1, 0.2],
+      [0.7, 0.9],
+      [0.5, 0.5],
+    ]) {
       const d = directionOf(u, v);
       expect(d.length()).toBeCloseTo(1, 9);
       expect(Math.atan2(d.z, d.x) / (2 * Math.PI) + 0.5).toBeCloseTo(u, 9);
@@ -62,7 +81,10 @@ describe('v2 studio lighting (DsN 5.3)', () => {
     const px = bake(w);
     const { data } = parse(encodeHdr(px, w, w / 2));
     for (let i = 0; i < px.length / 3; i++)
-      for (let c = 0; c < 3; c++) expect(Math.abs(data[i * 4 + c] - px[i * 3 + c])).toBeLessThanOrEqual(px[i * 3 + c] / 64 + 1e-6);
+      for (let c = 0; c < 3; c++)
+        expect(Math.abs(data[i * 4 + c] - px[i * 3 + c])).toBeLessThanOrEqual(
+          px[i * 3 + c] / 64 + 1e-6,
+        );
   });
 
   it('rgbe keeps the largest mantissa below 256', () => {

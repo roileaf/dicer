@@ -8,6 +8,7 @@ import {
   bodyMaterialId,
   createBodyMaterial,
   LOCAL_SCALE,
+  localScaleOf,
   patchBodyShader,
   presetsOf,
   registerBodies,
@@ -107,7 +108,7 @@ describe('v2 body materials (DsN 5.1)', () => {
     for (const type of BODY_TYPES.filter((t) => t !== 'opaque')) {
       const shader = patchBodyShader(physical(), bodyGlsl(type, 'patina'));
       const glsl = bodyGlsl(type, 'patina');
-      expect(shader.vertexShader).toContain(`vLocalPos = transformed * ${LOCAL_SCALE.toFixed(4)}`);
+      expect(shader.vertexShader).toContain('vLocalPos = transformed * uDcLocalScale;');
       for (const d of glsl.defines) expect(shader.fragmentShader).toContain(`#define ${d}`);
       const f = shader.fragmentShader;
       // mask, body, restore: in that order, after DsN's map has set diffuseColor
@@ -137,8 +138,25 @@ describe('v2 body materials (DsN 5.1)', () => {
     expect(one.fragmentShader).toContain('#define DICER_GEM');
   });
 
-  it('maps DsN metres to v1 die units: a DsN d6 edge is a v1 d6 edge', () => {
-    expect(0.016 * LOCAL_SCALE).toBeCloseTo(2 / Math.sqrt(3), 9);
+  it('maps DsN metres to v1 die units by the size of the die drawn (DsN sizes dice to the screen)', () => {
+    // v1's dice have unit circumradius: a board die of radius 0.04 m and a preview die of 0.02 m
+    const die = (r) =>
+      new THREE.BufferGeometry().setAttribute(
+        'position',
+        new THREE.Float32BufferAttribute([r, 0, 0, 0, -r / 2, 0, 0, 0, r / 3], 3),
+      );
+    const board = die(0.04);
+    expect(localScaleOf(board)).toBeCloseTo(25, 4);
+    expect(localScaleOf(die(0.02))).toBeCloseTo(50, 4);
+    expect(localScaleOf(new THREE.BufferGeometry())).toBe(LOCAL_SCALE); // nothing to measure
+    // every body carries the uniform, and its look follows the geometry at each draw
+    for (const type of BODY_TYPES) {
+      const material = createBodyMaterial(DiceMaterial, type);
+      expect(material._uniforms.get('uDcLocalScale')).toBe(LOCAL_SCALE);
+      const mat = dsnMaterial(material, { materialSettings: {} });
+      mat.onBeforeRender(null, null, null, board);
+      expect(mat.userData.uniforms.uDcLocalScale.value).toBeCloseTo(25, 4);
+    }
     expect(presetsOf('stone')[0]).toBe('granite');
     expect(bodyMaterialId('gem')).toBe('dicer.body-gem');
   });

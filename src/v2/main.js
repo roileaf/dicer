@@ -5,6 +5,7 @@
 import { DiceMaterial } from 'dice-so-nice/api.js';
 import { registerLighting } from './lighting.js';
 import { registerBodies } from './materials/bodies.js';
+import { registerInsideMotion, registerResin } from './materials/resin.js';
 import { registerSounds } from './sounds/register.js';
 
 export const DSN_ID = 'dice-so-nice';
@@ -25,6 +26,7 @@ export function onDiceSoNiceReady(dice3d) {
   // after the sounds: each material names its set of impact sounds
   try {
     registerBodies(dice3d, DiceMaterial);
+    registerResin(dice3d, DiceMaterial);
   } catch (err) {
     console.error('dicer: cannot register the body materials', err);
   }
@@ -33,6 +35,9 @@ export function onDiceSoNiceReady(dice3d) {
 Hooks.once('diceSoNiceReady', (dice3d) => {
   onDiceSoNiceReady(dice3d);
 });
+
+// the living insides follow each die through DsN's dice events
+registerInsideMotion();
 
 Hooks.once('ready', () => {
   if (game.modules.get(DSN_ID)?.active) return;
