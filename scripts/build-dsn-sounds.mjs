@@ -1,0 +1,92 @@
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { MATERIAL_COLOUR, SURFACE_COLOUR } from '../src/audio/sound-engine.js';
+
+const root = fileURLToPath(new URL('..', import.meta.url));
+const RATE = 48000;
+const LEAD = 0.01;
+const TAIL = 0.03;
+const OUT_DIR = 'assets/sounds/dsn';
+
+export function ffmpegFilter(f) {
+  if (f.type === 'lowpass')
+    return `lowpass=f=${f.frequency}${f.Q ? `:width_type=q:width=${f.Q}` : ''}`;
+  if (f.type === 'highshelf') return `highshelf=f=${f.frequency}:g=${f.gain}`;
+  if (f.type === 'peaking')
+    return `equalizer=f=${f.frequency}:width_type=q:width=${f.Q ?? 1}:g=${f.gain}`;
+  throw new Error(`no ffmpeg filter for ${f.type}`);
+}
+
+export function filterChain({ rate = 1, filters = [], db = 0 }) {
+  const chain = [];
+  if (rate !== 1) chain.push(`asetrate=${Math.round(RATE * rate)}`, `aresample=${RATE}`);
+  for (const f of filters) chain.push(ffmpegFilter(f));
+  if (db) chain.push(`volume=${db}dB`);
+  return chain.join(',') || 'anull';
+}
+
+export function hitSpans(hits, rate = 1, length = Infinity) {
+  const r = (x) => Math.round(x * 10000) / 10000;
+  return hits.map((h) => ({
+    start: r(Math.max(0, h.start - LEAD) / rate),
+    end: r(Math.min(length, (h.start + h.duration + TAIL) / rate)),
+    level: h.level,
+  }));
+}
+
+function render(input, output, colour) {
+  execFileSync('ffmpeg', [
+    '-v',
+    'error',
+    '-y',
+    '-i',
+    input,
+    '-ac',
+    '1',
+    '-af',
+    filterChain(colour),
+    '-ar',
+    String(RATE),
+    '-c:a',
+    'libvorbis',
+    '-q:a',
+    '5',
+    output,
+  ]);
+}
+
+function main() {
+  mkdirSync(`${root}${OUT_DIR}`, { recursive: true });
+  const hard = JSON.parse(readFileSync(`${root}assets/sounds/dice-hits.json`, 'utf8'));
+  const felt = JSON.parse(readFileSync(`${root}assets/sounds/dice-hits-felt.json`, 'utf8'));
+  const manifest = { dice: {}, table: {} };
+  for (const [name, colour] of Object.entries(MATERIAL_COLOUR)) {
+    render(`${root}assets/sounds/dice-hits.mp3`, `${root}${OUT_DIR}/dice-${name}.ogg`, colour);
+    manifest.dice[name] = {
+      file: `${OUT_DIR}/dice-${name}.ogg`,
+      hits: hitSpans(hard.hits, colour.rate),
+    };
+  }
+  for (const [name, colour] of Object.entries(SURFACE_COLOUR)) {
+    const fromFelt = name === 'felt';
+    const src = fromFelt ? 'dice-hits-felt.mp3' : 'dice-hits.mp3';
+    render(
+      `${root}assets/sounds/${src}`,
+      `${root}${OUT_DIR}/table-${name}.ogg`,
+      fromFelt ? {} : colour,
+    );
+    manifest.table[name] = {
+      file: `${OUT_DIR}/table-${name}.ogg`,
+      hits: hitSpans((fromFelt ? felt : hard).hits),
+    };
+  }
+  const js = `export const SOUND_SPRITES = ${JSON.stringify(manifest)};\n`;
+  mkdirSync(`${root}src/v2/sounds`, { recursive: true });
+  writeFileSync(`${root}src/v2/sounds/manifest.js`, js);
+  console.log(
+    `wrote ${Object.keys(manifest.dice).length} dice and ${Object.keys(manifest.table).length} table sprites`,
+  );
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

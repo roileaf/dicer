@@ -836,18 +836,18 @@
         "Mimic": "Mimic",
         "Slime": "Slime",
         "Dragonling": "Dragonling",
-      "Owl": "Owl",
-      "Frog": "Frog",
-      "Ghost": "Ghost",
-      "Mushroom": "Mushroom",
-      "Eye": "Floating eye",
-      "Golem": "Pebble golem",
-      "Cat": "Cat",
-      "Fox": "Fox",
-      "Lantern": "Paper lantern",
-      "Imp": "Imp",
-      "Robot": "Clockwork robot",
-      "Jester": "Jester doll",
+        "Owl": "Owl",
+        "Frog": "Frog",
+        "Ghost": "Ghost",
+        "Mushroom": "Mushroom",
+        "Eye": "Floating eye",
+        "Golem": "Pebble golem",
+        "Cat": "Cat",
+        "Fox": "Fox",
+        "Lantern": "Paper lantern",
+        "Imp": "Imp",
+        "Robot": "Clockwork robot",
+        "Jester": "Jester doll",
         "Color": "Colour",
         "Natural": "Natural colours",
         "NaturalHint": "Each pet in its own colours (a brown owl, a green frog...) instead of the colour you pick. Picking a colour turns this off.",
@@ -1534,6 +1534,49 @@
         "pending": "Not migrated yet (logs in next)",
         "migrated": "Migrated",
         "off": "Not migrated: import is switched off"
+      }
+    },
+    "V2": {
+      "NeedsDsn": "Dicer needs Dice So Nice: enable it in Manage Modules.",
+      "Surface": {
+        "felt": "Felt (Dicer)",
+        "wood": "Wood (Dicer)",
+        "stone": "Stone (Dicer)",
+        "metal": "Metal (Dicer)"
+      },
+      "Ambiance": {
+        "studio": "Studio (Dicer)"
+      },
+      "Material": {
+        "opaque": "Opaque (Dicer)",
+        "metal": "Metal (Dicer)",
+        "marble": "Marble (Dicer)",
+        "pearl": "Pearl (Dicer)",
+        "iridescent": "Iridescent (Dicer)",
+        "gem": "Gemstone (Dicer)",
+        "wood": "Wood (Dicer)",
+        "stone": "Stone (Dicer)",
+        "bone": "Bone (Dicer)",
+        "resin": "Clear resin (Dicer)",
+        "jelly": "Jelly (Dicer)",
+        "JellyGlow": "Glow in the second colour"
+      },
+      "Themes": {
+        "Menu": "Dicer themes",
+        "MenuLabel": "Browse themes",
+        "MenuHint": "Pick one of Dicer's dice themes for your dice. Dice So Nice draws the pictures and keeps the theme as your dice look.",
+        "Use": "Use as my dice",
+        "InUse": "Your dice",
+        "UseHint": "This replaces your dice look in Dice So Nice. You can still change every part of it there.",
+        "Applied": "Your dice are now {name}.",
+        "NoPictures": "Your 3D dice are hidden, so the themes have no pictures."
+      },
+      "Effects": {
+        "trail": "Elemental trail",
+        "impact-sparks": "Impact sparks"
+      },
+      "Quality": {
+        "Hint": "Auto starts at High and steps down when rolls stay slow, remembering it for next time. Lower tiers draw the insides of resin dice with fewer steps and fewer particles, and from Medium down also turn off some of Dice So Nice's display options for this session. Your own Dice So Nice settings are never changed."
       }
     }
   }

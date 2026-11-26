@@ -1,0 +1,49 @@
+<div class="dicer-theme-browser-body">
+  <div class="dicer-toolbar">
+    <label class="dicer-theme-search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input type="search" name="dicerThemeSearch" value="{{query}}" placeholder="{{localize "DICER.Themes.Search"}}" aria-label="{{localize "DICER.Themes.Search"}}" autocomplete="off" spellcheck="false">
+    </label>
+  </div>
+  {{#if hidden}}<p class="dicer-muted">{{localize "DICER.V2.Themes.NoPictures"}}</p>{{/if}}
+
+  <div class="dicer-theme-main">
+    <div class="dicer-theme-grid" role="listbox" aria-label="{{localize "DICER.Themes.Title"}}">
+      {{#unless cards.length}}<p class="dicer-empty">{{localize "DICER.Themes.SearchEmpty"}}</p>{{/unless}}
+      {{#each cards}}
+        <div class="dicer-theme-card {{#if selected}}is-selected{{/if}}" data-theme="{{id}}" data-action="select" role="option" tabindex="0" aria-selected="{{#if selected}}true{{else}}false{{/if}}">
+          <div class="dicer-stage" style="--dicer-swatch: {{swatch}}">
+            <i class="dicer-fallback fa-solid fa-dice-d20" aria-hidden="true"></i>
+            <img class="dicer-thumb" data-theme="{{id}}" data-die="d20" data-size="96" alt="" hidden>
+            {{#if inUse}}<span class="dicer-mark dicer-mark-default" data-tooltip="DICER.V2.Themes.InUse" aria-label="{{localize "DICER.V2.Themes.InUse"}}"><i class="fa-solid fa-star"></i></span>{{/if}}
+          </div>
+          <div class="dicer-card-name" title="{{name}}">{{name}}</div>
+        </div>
+      {{/each}}
+    </div>
+
+    {{#if detail}}
+      <aside class="dicer-theme-detail" data-theme="{{detail.id}}">
+        <div class="dicer-stage dicer-stage-large" style="--dicer-swatch: {{detail.swatch}}">
+          <i class="dicer-fallback fa-solid fa-dice-d20" aria-hidden="true"></i>
+          <img class="dicer-thumb" data-theme="{{detail.id}}" data-die="d20" data-size="220" alt="{{detail.name}}" hidden>
+        </div>
+        <header class="dicer-detail-head">
+          <h3>{{detail.name}}</h3>
+        </header>
+        {{#if detail.credit}}<p class="dicer-muted dicer-credit"><i class="fa-solid fa-palette"></i> {{detail.credit}}</p>{{/if}}
+        <div class="dicer-v2-dice">
+          {{#each detail.dice}}
+            <span class="dicer-die"><img class="dicer-thumb" data-theme="{{../detail.id}}" data-die="{{this}}" data-size="56" alt="{{this}}" hidden></span>
+          {{/each}}
+        </div>
+        {{#if detail.inUse}}
+          <p class="dicer-is-default"><i class="fa-solid fa-star"></i> {{localize "DICER.V2.Themes.InUse"}}</p>
+        {{else}}
+          <button type="button" class="bright dicer-primary" data-action="use" data-theme="{{detail.id}}"><i class="fa-solid fa-star"></i> {{localize "DICER.V2.Themes.Use"}}</button>
+        {{/if}}
+        <p class="dicer-hint">{{localize "DICER.V2.Themes.UseHint"}}</p>
+      </aside>
+    {{/if}}
+  </div>
+</div>

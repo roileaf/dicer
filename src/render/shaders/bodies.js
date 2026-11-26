@@ -67,18 +67,14 @@ export const BODY_VERTEX = /* glsl */ `
 #endif
 `;
 
-/** Fragment shader: after `#include <common>` (after ENGRAVE_PARS). */
-export const BODY_PARS = /* glsl */ `
-uniform vec3 uBodyColor2;
-uniform float uVeinScale;
-uniform vec3 uGlowColor;
-uniform float uGlowIntensity;
+export const RESIN_UNIFORMS = /* glsl */ `
 uniform float uResinDensity; // Beer-Lambert strength (1: a full ${RESIN.refChord} chord transmits the body colour)
 uniform float uResinFloor;   // albedo of the lit table seen below the horizon through resin
 uniform vec3 uResinRadii;    // body ellipsoid semi-axes, die-local (a ${RESIN.radius} sphere; flattened on the coin)
 uniform vec4 uResinTint;     // rgb: tint target, a: its share of the Beer-Lambert body colour
-varying float vEdgeDist;
-varying vec3 vLocalPos;
+`;
+
+export const RESIN_PARS = /* glsl */ `
 #ifdef DICER_RESIN
 varying vec3 vLocalCam;
 uniform mat4 modelMatrix; // three uploads it per object; the vertex stage declares it too
@@ -97,7 +93,17 @@ float dcChord( vec3 p, vec3 d, out vec3 radii ) {
 	return max( ( - b + sqrt( max( b * b - a * c, 0.0 ) ) ) / a, 0.0 );
 }
 #endif
+`;
 
+/** Fragment shader: after `#include <common>` (after ENGRAVE_PARS). */
+export const BODY_PARS = /* glsl */ `
+uniform vec3 uBodyColor2;
+uniform float uVeinScale;
+uniform vec3 uGlowColor;
+uniform float uGlowIntensity;
+${RESIN_UNIFORMS.trimStart()}varying float vEdgeDist;
+varying vec3 vLocalPos;
+${RESIN_PARS.trimStart()}
 // Raised border: a smoothstep bump of height ${BORDER.height} across aEdgeDist in [${BORDER.from}, ${BORDER.to}].
 float dcBorderH( float e ) {
 	float m = ${f((BORDER.from + BORDER.to) / 2)};

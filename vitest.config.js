@@ -1,8 +1,14 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 import { rapierWasmPlugin } from './build/rapier-wasm-plugin.js';
 
 export default defineConfig({
   plugins: [rapierWasmPlugin()],
+  resolve: {
+    alias: {
+      'dice-so-nice/api.js': fileURLToPath(new URL('./tests/helpers/dsn-api.js', import.meta.url)),
+    },
+  },
   test: {
     environment: 'node',
     globals: true,

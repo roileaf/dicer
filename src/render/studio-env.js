@@ -8,7 +8,9 @@ import * as THREE from 'three';
 // from straight above, so every top face mirrors it head-on, and at 2.5 that glare washed a
 // clear die's inside out (Eruption's lava, Nautilus's swirls); metal and opaque dice barely
 // change, lit by the key, rim and sweep.
-const PANELS = [
+export const BACKDROP = '#0d0f14';
+
+export const PANELS = [
   ['overhead', 0.8, '#ffffff', [10, 10], [0, 8, 0]],
   ['key', 10, '#ffffff', [1, 5], [-6, 4, 2]],
   ['rim', 8, '#ffffff', [1, 5], [6, 3, -3]],
@@ -26,7 +28,7 @@ export function createStudioScene() {
 
   const backdrop = new THREE.Mesh(
     new THREE.SphereGeometry(50, 16, 12),
-    new THREE.MeshBasicMaterial({ color: '#0d0f14', side: THREE.BackSide }),
+    new THREE.MeshBasicMaterial({ color: BACKDROP, side: THREE.BackSide }),
   );
   scene.add(backdrop);
 

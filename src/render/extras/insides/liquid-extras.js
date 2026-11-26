@@ -178,8 +178,8 @@ vec4 dcInterior( vec3 p, vec3 rd, float dt ) {
 }
 `;
 
-const CORE_FROM = "// today's liquid core";
-const CORE_TO = "// the bubble's front surface";
+const CORE_FROM = 'vec4 dcLqLiquid(';
+const CORE_TO = 'vec4 dcLqBubble(';
 
 /**
  * The body with insideMotion: every dcIUp is the lagged up, and the still core (dcLqLiquid) is

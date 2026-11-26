@@ -3393,3 +3393,21 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   color: var(--color-level-warning, #ee9b3a);
   opacity: 1;
 }
+
+.dicer-theme-browser .dicer-v2-dice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+.dicer-theme-browser .dicer-v2-dice .dicer-die {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+.dicer-theme-browser .dicer-v2-dice img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
