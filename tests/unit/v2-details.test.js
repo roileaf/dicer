@@ -35,6 +35,8 @@ import {
   iconChar,
   iconCombos,
   iconLabels,
+  iconPackFont,
+  iconPackOf,
   iconsOf,
   iconSystemId,
   registerIconSystems,
@@ -276,12 +278,28 @@ describe('v2 themes carry their numbers, edges and fonts to DsN', () => {
 });
 
 describe('v2 d20 icons as DsN dice systems', () => {
-  it('reads a look`s icons, and names a system for each pair', () => {
+  it('reads a look`s icons, and names a system for each icon pair, font and mesh', () => {
     expect(iconsOf(theme('jelly-belly').appearance)).toEqual({ crit: 'heart', fumble: null });
     expect(iconsOf(theme('gold-polished').appearance)).toBeNull();
     expect(iconsOf({ numbers: { icons: { crit: 'nope' } } })).toBeNull();
-    expect(iconSystemId({ crit: 'heart', fumble: null })).toBe('dicer-icons-heart-none');
-    expect(iconSystemId({ crit: null, fumble: 'skull' })).toBe('dicer-icons-none-skull');
+    expect(iconPackOf(theme('jelly-belly').appearance)).toEqual({
+      crit: 'heart',
+      fumble: null,
+      font: 'blackletter',
+      rounded: true,
+    });
+    expect(iconPackOf(theme('gold-polished').appearance)).toBeNull();
+    expect(iconSystemId({ crit: 'heart', fumble: null, font: 'blackletter', rounded: true })).toBe(
+      'dicer-icons-heart-none-blackletter',
+    );
+    expect(iconSystemId({ crit: null, fumble: 'skull', font: 'serif', rounded: false })).toBe(
+      'dicer-icons-none-skull-serif-sharp',
+    );
+    const odd = {
+      numbers: { icons: { crit: 'heart' }, font: 'css:Georgia' },
+      edges: { radius: 0 },
+    };
+    expect(iconPackOf(odd)).toMatchObject({ font: 'serif', rounded: false });
   });
 
   it('puts the crit icon on the 20 and the fumble icon on the 1, as the icon font`s characters', () => {
@@ -294,33 +312,38 @@ describe('v2 d20 icons as DsN dice systems', () => {
     expect(iconLabels({ crit: 'flame', fumble: null })[0]).toBe('1');
   });
 
-  it('registers one d20 system per pair the built-in themes use', () => {
+  it('gives every icon pack a font that has the icons, so it reads with any look', () => {
+    expect(iconPackFont({ font: 'uncial' })).toBe('Dicer Uncial, Dicer Icons');
     const dice3d = { addSystem: vi.fn(), addDicePreset: vi.fn() };
     const ids = registerIconSystems(dice3d, DiceSystem, BUILTIN_THEMES, (k) => k);
     expect(ids.sort()).toEqual([
-      'dicer-icons-flame-none',
-      'dicer-icons-heart-none',
-      'dicer-icons-none-skull',
-      'dicer-icons-starburst-none',
+      'dicer-icons-flame-none-uncial',
+      'dicer-icons-heart-none-blackletter',
+      'dicer-icons-none-skull-serif',
+      'dicer-icons-starburst-none-serif',
+      'dicer-icons-starburst-none-uncial',
     ]);
-    expect(iconCombos().length).toBe(4);
+    expect(iconCombos().length).toBe(5);
+    for (const [preset] of dice3d.addDicePreset.mock.calls) {
+      expect(preset.type).toBe('d20');
+      expect(preset.labels.length).toBe(20);
+      expect(preset.font).toMatch(/^Dicer \w+, Dicer Icons$/);
+      expect(ids).toContain(preset.system);
+    }
     const [system] = dice3d.addSystem.mock.calls[0];
+    expect(system).toBeInstanceOf(DiceSystem);
     expect(system.group).toBe('Dicer');
-    expect(system.name.startsWith('DICER.V2.Icons: ')).toBe(true);
-    const [preset] = dice3d.addDicePreset.mock.calls[0];
-    expect([preset.type, preset.system, preset.labels.length]).toEqual([
-      'd20',
-      dice3d.addSystem.mock.calls[0][0].id,
-      20,
-    ]);
+    expect(system.mesh).toBe('rounded');
+    expect(system.name).toMatch(
+      /^DICER\.V2\.Icons: DICER\.Appearance\.Icon\.\w+ \(DICER\.Appearance\.FontKind\.\w+\)$/,
+    );
   });
 
-  it('gives a theme with icons a d20 part on that system, with the icon font behind its own', () => {
+  it('gives a theme with icons a d20 part on its pack, and changes nothing else', () => {
     const jelly = dsnAppearance(theme('jelly-belly'));
-    expect(jelly.d20.system).toBe('dicer-icons-heart-none');
-    expect(jelly.d20.font).toBe('Dicer Blackletter, Dicer Icons');
+    expect(jelly.d20.system).toBe('dicer-icons-heart-none-blackletter');
     expect(jelly.global.system).toBe('rounded');
-    expect({ ...jelly.d20, system: 'rounded', font: jelly.global.font }).toEqual(jelly.global);
+    expect({ ...jelly.d20, system: 'rounded' }).toEqual(jelly.global);
     expect('d20' in dsnAppearance(theme('gold-polished'))).toBe(false);
   });
 });

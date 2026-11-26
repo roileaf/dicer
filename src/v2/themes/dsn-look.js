@@ -3,7 +3,7 @@ import { readableNumbers } from '../../look/contrast.js';
 import { BODIES, bodyMaterialId, presetsOf } from '../materials/bodies.js';
 import { detailSettingsOf } from '../materials/details.js';
 import { fontFamilyOf } from './fonts.js';
-import { ICON_FONT, iconsOf, iconSystemId, isRounded } from './icons.js';
+import { iconPackOf, iconSystemId, isRounded } from './icons.js';
 
 const pct = (v) => Math.round(v * 100);
 
@@ -71,16 +71,7 @@ export function dsnLook(a) {
 export function dsnAppearance(theme) {
   const out = { global: dsnLook(theme.appearance) };
   for (const [type, a] of Object.entries(theme.perType ?? {})) out[type] = dsnLook(a);
-  const iconLook = theme.perType?.d20 ?? theme.appearance;
-  const icons = iconsOf(iconLook);
-  if (icons) {
-    const d20 = out.d20 ?? out.global;
-    const font = d20.font === 'auto' ? 'Arial' : d20.font;
-    out.d20 = {
-      ...d20,
-      system: iconSystemId(icons, isRounded(iconLook)),
-      font: `${font}, ${ICON_FONT}`,
-    };
-  }
+  const pack = iconPackOf(theme.perType?.d20 ?? theme.appearance);
+  if (pack) out.d20 = { ...(out.d20 ?? out.global), system: iconSystemId(pack) };
   return out;
 }
