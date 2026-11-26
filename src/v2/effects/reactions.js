@@ -71,6 +71,7 @@ export function createReactions({
   index = themeIndex(),
   getBox = () => globalThis.game?.dice3d?.box,
   now = () => performance.now(),
+  voices = null,
 } = {}) {
   const running = [];
   let lastTick = -1;
@@ -125,7 +126,10 @@ export function createReactions({
       if (result == null) return;
       const theme = themeOf(dice, type, index);
       if (!theme) return;
-      for (const rule of celebrationsFor(theme, type, result)) play(dice, rule.effect);
+      for (const rule of celebrationsFor(theme, type, result)) {
+        play(dice, rule.effect);
+        voices?.effect(rule.sound);
+      }
     },
     onFrame() {
       if (!running.length) return;

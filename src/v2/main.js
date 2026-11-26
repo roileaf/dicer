@@ -1,14 +1,15 @@
 import { DiceMaterial, DiceSFX, TabletopObject } from 'dice-so-nice/api.js';
 import { registerEffectHooks, registerEffects } from './effects/classes.js';
-import { registerReactions } from './effects/reactions.js';
+import { createReactions, registerReactions } from './effects/reactions.js';
 import { registerLighting } from './lighting.js';
 import { registerBodies } from './materials/bodies.js';
 import { registerInsideMotion, registerResin } from './materials/resin.js';
 import { registerLaunch } from './pets/launch.js';
-import { registerPets } from './pets/pets.js';
+import { createPets, registerPets } from './pets/pets.js';
 import { openPetWindow, registerPetWindow } from './pets/window.js';
 import { registerQuality } from './quality/controller.js';
 import { registerSounds } from './sounds/register.js';
+import { createVoices, registerVoiceSettings } from './sounds/voices.js';
 import { openThemeBrowser, registerThemeBrowser } from './themes/browser.js';
 
 export const DSN_ID = 'dice-so-nice';
@@ -45,13 +46,15 @@ Hooks.once('diceSoNiceReady', (dice3d) => {
 registerInsideMotion();
 registerEffectHooks();
 registerQuality();
-const pets = registerPets(TabletopObject);
+const voices = createVoices();
+const pets = registerPets(TabletopObject, Hooks, createPets({ TabletopObject, voices }));
 registerLaunch();
-const reactions = registerReactions();
+const reactions = registerReactions(Hooks, createReactions({ voices }));
 
 Hooks.once('init', () => {
   registerThemeBrowser();
   registerPetWindow();
+  registerVoiceSettings();
   const module = game.modules.get(MODULE);
   if (module)
     module.api = {

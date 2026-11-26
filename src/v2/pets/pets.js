@@ -70,6 +70,7 @@ export function createPet({
   now = () => performance.now(),
   saveSpot = () => {},
   view = globalThis,
+  voice = () => {},
 }) {
   const { kind, color, natural } = readPet(user);
   const spot = spotOf(user, index);
@@ -90,6 +91,7 @@ export function createPet({
     if (!creature || !ms) return false;
     action = { phase, reaction, t0: now(), ms };
     object.setAnimated(true);
+    voice(kind, phase, reaction);
     return true;
   }
 
@@ -183,6 +185,7 @@ export function createPets({
   getSetting = (key) => globalThis.game.settings.get(MODULE, key),
   setTimer = (fn, ms) => setTimeout(fn, ms),
   now,
+  voices = null,
 } = {}) {
   const pets = new Map();
   let rolling = null;
@@ -211,7 +214,16 @@ export function createPets({
         ).catch(() => {});
       pets.set(
         user.id,
-        createPet({ TabletopObject, dice3d, user, index, canMove, saveSpot, ...(now && { now }) }),
+        createPet({
+          TabletopObject,
+          dice3d,
+          user,
+          index,
+          canMove,
+          saveSpot,
+          voice: (kind, phase, reaction) => void voices?.pet(kind, phase, reaction),
+          ...(now && { now }),
+        }),
       );
     });
   }
