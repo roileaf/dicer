@@ -41,6 +41,14 @@ export function spotOf(user, index = 0) {
   return { ...SPOTS[index % SPOTS.length] };
 }
 
+export function stableIndex(user, users) {
+  const ids = [...users]
+    .filter((u) => readPet(u).kind !== 'none')
+    .map((u) => u.id)
+    .sort();
+  return Math.max(0, ids.indexOf(user.id));
+}
+
 export const facing = (spot) => Math.atan2(0.5 - spot.x, 0.5 - spot.y);
 
 export function petsToShow({ users, me, getSetting }) {
@@ -193,7 +201,9 @@ export function createPets({
     for (const pet of pets.values()) pet.remove();
     pets.clear();
     const me = getMe();
-    petsToShow({ users: getUsers(), me, getSetting: read }).forEach((user, index) => {
+    const users = getUsers();
+    petsToShow({ users, me, getSetting: read }).forEach((user) => {
+      const index = stableIndex(user, users);
       const canMove = user.id === me?.id || me?.isGM === true;
       const saveSpot = (spot) =>
         Promise.resolve(

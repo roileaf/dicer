@@ -4,6 +4,7 @@ import { registerReactions } from './effects/reactions.js';
 import { registerLighting } from './lighting.js';
 import { registerBodies } from './materials/bodies.js';
 import { registerInsideMotion, registerResin } from './materials/resin.js';
+import { registerLaunch } from './pets/launch.js';
 import { registerPets } from './pets/pets.js';
 import { openPetWindow, registerPetWindow } from './pets/window.js';
 import { registerQuality } from './quality/controller.js';
@@ -45,6 +46,7 @@ registerInsideMotion();
 registerEffectHooks();
 registerQuality();
 const pets = registerPets(TabletopObject);
+registerLaunch();
 const reactions = registerReactions();
 
 Hooks.once('init', () => {
