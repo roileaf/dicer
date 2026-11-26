@@ -3,20 +3,16 @@ import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PET_TIMBRES } from '../src/audio/pet-timbre.js';
 import { renderPetSound, renderResult, RESULT_SOUNDS } from '../src/audio/synth.js';
+import { FX_SOUNDS, PET_SOUNDS } from '../src/v2/sounds/voices.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 export const RATE = 48000;
 export const FX_DIR = 'assets/sounds/dsn/fx';
 export const PET_DIR = 'assets/sounds/dsn/pets';
-export const FX_SOUNDS = Object.freeze(RESULT_SOUNDS.filter((name) => !name.startsWith('pet')));
-export const PET_SOUNDS = Object.freeze([
-  'petHappy',
-  'petSad',
-  'petHmm',
-  'petHuh',
-  'petPurr',
-  'petYelp',
-]);
+export const SYNTH_FX_SOUNDS = Object.freeze(
+  RESULT_SOUNDS.filter((name) => !name.startsWith('pet')),
+);
+export { FX_SOUNDS, PET_SOUNDS };
 export const PET_VOICES = Object.freeze(Object.keys(PET_TIMBRES));
 
 export const fxFile = (name) => `${FX_DIR}/${name}.ogg`;

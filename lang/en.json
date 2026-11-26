@@ -1576,10 +1576,6 @@
       },
       "Quality": {
         "Hint": "Auto starts at High and steps down when rolls stay slow, remembering it for next time. Lower tiers draw the insides of resin dice with fewer steps and fewer particles, and from Medium down also turn off some of Dice So Nice's display options for this session. Your own Dice So Nice settings are never changed."
-      },
-      "Pets": {
-        "Save": "Save",
-        "MoveHint": "Your pet stands in the roll area while dice are on the table. Drag it to move it; click it to pet it."
       }
     }
   }

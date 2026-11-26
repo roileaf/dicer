@@ -32,8 +32,30 @@ export const PET_SOUNDS = Object.freeze([
   'petHuh',
   'petPurr',
   'petYelp',
+  'petOooh',
+  'petHuff',
+  'petCough',
+  'petShiver',
+  'petZap',
+  'petFizz',
+  'petBleh',
+  'petSpooked',
+  'petCoo',
+  'petRing',
+  'petOof',
+  'petDizzy',
+  'petWoo',
+  'petOw',
+  'petWhoa',
+  'petYip',
+  'petBonk',
 ]);
-export const PET_ACTION_SOUND = Object.freeze({ pet: 'petPurr', startle: 'petYelp' });
+export const PET_ACTION_SOUND = Object.freeze({
+  pet: 'petPurr',
+  startle: 'petYelp',
+  throw: 'petOooh',
+  huff: 'petHuff',
+});
 
 export const fxSoundUrl = (name) => (FX_SOUNDS.includes(name) ? `${BASE}/fx/${name}.ogg` : null);
 export const petSoundUrl = (kind, name) =>
@@ -41,7 +63,8 @@ export const petSoundUrl = (kind, name) =>
     ? `${BASE}/pets/${kind}-${name}.ogg`
     : null;
 
-export function petActionSound(action, reaction) {
+export function petActionSound(action, reaction, sound) {
+  if (sound !== undefined) return sound;
   if (action === 'react') return reactionSound(reaction);
   return PET_ACTION_SOUND[action] ?? null;
 }
@@ -75,8 +98,8 @@ export function createVoices({
   }
   return {
     effect: (sound) => on('effectSounds') && play(fxSoundUrl(sound?.builtin)),
-    pet: (kind, action, reaction) =>
-      on('petSounds') && play(petSoundUrl(kind, petActionSound(action, reaction))),
+    pet: (kind, action, reaction, sound) =>
+      on('petSounds') && play(petSoundUrl(kind, petActionSound(action, reaction, sound))),
   };
 }
 
@@ -86,7 +109,7 @@ export function registerVoiceSettings(settings = globalThis.game.settings) {
       name: `DICER.Settings.${key}.Name`,
       hint: `DICER.Settings.${key}.Hint`,
       scope: 'client',
-      config: true,
+      config: key !== 'petSounds',
       type: Boolean,
       default: true,
     });

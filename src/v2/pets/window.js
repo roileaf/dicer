@@ -1,57 +1,125 @@
 import { PET_KINDS, readPet } from '../../pet/pet-for.js';
+import { buildPetForm, controlValue, petPlayers, savePet } from '../../ui/pet-window.js';
 
 const MODULE = 'dicer';
-const title = (kind) => kind[0].toUpperCase() + kind.slice(1);
+const HEX6 = /^#[0-9a-f]{6}$/;
+export const UNPORTED = '.dicer-pet-pitch, .dicer-pet-catch, .dicer-pet-preview';
 
-export function kindChoices(localize = (k) => globalThis.game.i18n.localize(k)) {
-  return PET_KINDS.map((kind) => ({
-    kind,
-    label: localize(`DICER.Appearance.Pet.${title(kind)}`),
-  }));
+const read = (settings, key) => {
+  try {
+    return settings.get(MODULE, key);
+  } catch {
+    return undefined;
+  }
+};
+
+export function petForm(
+  user,
+  {
+    self = globalThis.game?.user,
+    users = globalThis.game?.users,
+    settings = globalThis.game?.settings,
+  } = {},
+) {
+  const form = buildPetForm(readPet(user), {
+    allowed: read(settings, 'petsAllowed') !== false,
+    hidden: read(settings, 'showPets') === false,
+    players: petPlayers(self, users),
+    target: user?.id,
+  });
+  for (const el of form.querySelectorAll(UNPORTED)) el.remove();
+  return form;
 }
 
-export async function savePet(user, { kind, color, natural }) {
-  const flag = user.getFlag(MODULE, 'pet') ?? {};
-  const next = {
-    ...flag,
-    kind: PET_KINDS.includes(kind) ? kind : 'mimic',
-    natural: natural === true,
+export function wirePetForm(
+  form,
+  { getTarget, setTarget, rerender, save = savePet, settings = globalThis.game?.settings },
+) {
+  const mirror = (el) => {
+    if (el?.type === 'range') el.nextElementSibling.textContent = el.value;
+    if (!el?.matches?.('[data-pet-color]')) return null;
+    const v = String(el.value).trim().toLowerCase();
+    if (!HEX6.test(v)) return null;
+    for (const input of form.querySelectorAll('[data-pet-color]')) input.value = v;
+    return v;
   };
-  if (/^#[0-9a-f]{6}$/i.test(String(color))) next.color = String(color).toLowerCase();
-  await user.setFlag(MODULE, 'pet', next);
-  return next;
+
+  async function onKind(button) {
+    const kind = button?.dataset.kind;
+    if (!PET_KINDS.includes(kind) || kind === readPet(getTarget()).kind) return;
+    if (await save({ kind }, getTarget())) rerender();
+  }
+
+  async function onSetting(key, el) {
+    const cfg = settings.settings.get(`${MODULE}.${key}`);
+    try {
+      await settings.set(MODULE, key, controlValue(el, cfg));
+    } catch (err) {
+      console.warn(`dicer: cannot save ${key}`, err);
+    }
+    if (key === 'showPets') rerender();
+  }
+
+  async function onChange(el) {
+    if (el?.matches?.('[data-pet-player]')) {
+      setTarget(el.value);
+      rerender();
+      return;
+    }
+    const key = el?.closest?.('[data-setting]')?.dataset.setting;
+    if (key) {
+      await onSetting(key, el);
+      return;
+    }
+    if (el?.matches?.('[data-pet-natural]')) {
+      if (!(await save({ natural: el.checked }, getTarget()))) rerender();
+      return;
+    }
+    const v = mirror(el);
+    if (!v) return;
+    const box = form.querySelector('[data-pet-natural]');
+    if (box) box.checked = false;
+    if (!(await save({ color: v, natural: false }, getTarget()))) rerender();
+  }
+
+  form.addEventListener('click', (event) => void onKind(event.target.closest?.('[data-kind]')));
+  form.addEventListener('input', (event) => void mirror(event.target));
+  form.addEventListener('change', (event) => void onChange(event.target));
+  form.addEventListener('submit', (event) => event.preventDefault());
+  return { onKind, onChange };
 }
 
 let PetWindow = null;
 
 export function petWindowClass() {
   if (PetWindow) return PetWindow;
-  const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+  const { ApplicationV2 } = foundry.applications.api;
 
-  PetWindow = class DicerPetWindow extends HandlebarsApplicationMixin(ApplicationV2) {
+  PetWindow = class DicerPetWindow extends ApplicationV2 {
     static DEFAULT_OPTIONS = {
       id: 'dicer-pet-window',
-      tag: 'form',
-      classes: ['dicer-theme-browser', 'dicer-pet-window'],
-      window: { title: 'DICER.PetWindow.Title', icon: 'fa-solid fa-dragon' },
-      position: { width: 380 },
-      form: { handler: DicerPetWindow.#onSubmit, closeOnSubmit: true },
+      classes: ['dicer-pet-window-app'],
+      window: { title: 'DICER.PetWindow.Title', icon: 'fa-solid fa-dragon', resizable: true },
+      position: { width: 460, height: 'auto' },
     };
 
-    static PARTS = { body: { template: 'modules/dicer/templates/v2-pet-window.hbs' } };
+    #targetId = null;
 
-    async _prepareContext() {
-      const pet = readPet(game.user);
-      return {
-        kinds: kindChoices().map((k) => ({ ...k, selected: k.kind === pet.kind })),
-        color: pet.color,
-        natural: pet.natural,
-      };
+    get target() {
+      return (this.#targetId && game.users.get(this.#targetId)) || game.user;
     }
 
-    static async #onSubmit(_event, _form, data) {
-      const o = data.object;
-      await savePet(game.user, { kind: o.kind, color: o.color, natural: o.natural === true });
+    async _renderHTML() {
+      return petForm(this.target);
+    }
+
+    _replaceHTML(result, content) {
+      content.replaceChildren(result);
+      wirePetForm(result, {
+        getTarget: () => this.target,
+        setTarget: (id) => void (this.#targetId = id),
+        rerender: () => void this.render(),
+      });
     }
   };
   return PetWindow;
@@ -66,9 +134,9 @@ export function openPetWindow() {
 
 export function registerPetWindow(settings = game.settings) {
   settings.registerMenu(MODULE, 'pet', {
-    name: 'DICER.PetWindow.Title',
-    label: 'DICER.PetWindow.Button',
-    hint: 'DICER.PetWindow.ButtonHint',
+    name: 'DICER.Settings.petWindow.Name',
+    label: 'DICER.Settings.petWindow.Label',
+    hint: 'DICER.Settings.petWindow.Hint',
     icon: 'fa-solid fa-dragon',
     type: petWindowClass(),
     restricted: false,

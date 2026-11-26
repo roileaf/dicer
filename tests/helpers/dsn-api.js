@@ -103,6 +103,7 @@ export class TabletopObject {
     this.collider = null;
     this.position = { x: 0.5, y: 0.5 };
     this.rotation = 0;
+    this.scale = 1;
     this.animated = false;
     this.persistent = false;
     this.listeners = {};
@@ -122,6 +123,10 @@ export class TabletopObject {
   }
   setRotation(angle) {
     this.rotation = angle;
+    return this;
+  }
+  setScale(scale) {
+    this.scale = scale;
     return this;
   }
   setAnimated(animated = true) {

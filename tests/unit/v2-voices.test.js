@@ -1,13 +1,9 @@
 import { existsSync, statSync } from 'node:fs';
 import * as THREE from 'three';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  FX_SOUNDS as SCRIPT_FX,
-  fxFile,
-  PET_SOUNDS as SCRIPT_PET,
-  PET_VOICES,
-  petFile,
-} from '../../scripts/build-dsn-voices.mjs';
+import { fxFile, PET_VOICES, petFile, SYNTH_FX_SOUNDS } from '../../scripts/build-dsn-voices.mjs';
+import { RESULT_SOUNDS } from '../../src/audio/synth.js';
+import { ELEMENT_FX } from '../../src/pet/chunk/element-fx.js';
 import { PET_KINDS } from '../../src/pet/pet-for.js';
 import { BUILTIN_THEMES } from '../../src/themes/themes.js';
 import { createReactions, themeIndex } from '../../src/v2/effects/reactions.js';
@@ -38,8 +34,9 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('v2 rendered sounds: v1`s synthesized sounds as files', () => {
   it('ships every effect sound and every pet`s voice the module can ask for', () => {
-    expect([...FX_SOUNDS]).toEqual([...SCRIPT_FX]);
-    expect([...PET_SOUNDS]).toEqual([...SCRIPT_PET]);
+    expect([...FX_SOUNDS]).toEqual([...SYNTH_FX_SOUNDS]);
+    for (const name of PET_SOUNDS) expect(RESULT_SOUNDS, name).toContain(name);
+    for (const fx of Object.values(ELEMENT_FX)) expect(PET_SOUNDS, fx.sound).toContain(fx.sound);
     expect([...PET_VOICES].sort()).toEqual(PET_KINDS.filter((k) => k !== 'none').sort());
     for (const name of FX_SOUNDS) {
       expect(fxSoundUrl(name)).toBe(`modules/dicer/${fxFile(name)}`);
@@ -76,7 +73,11 @@ describe('v2 rendered sounds: v1`s synthesized sounds as files', () => {
     expect(petActionSound('react', 'plain')).toBe('petHmm');
     expect(petActionSound('pet')).toBe('petPurr');
     expect(petActionSound('startle')).toBe('petYelp');
-    expect(petActionSound('throw')).toBeNull();
+    expect(petActionSound('throw')).toBe('petOooh');
+    expect(petActionSound('huff')).toBe('petHuff');
+    expect(petActionSound('shiver', 'plain', 'petShiver')).toBe('petShiver');
+    expect(petActionSound('cheer', 'plain', null)).toBeNull();
+    expect(petActionSound('enter')).toBeNull();
   });
 
   it('plays a file at DsN`s volume, locally, and not at all when DsN is silent', () => {
@@ -103,7 +104,9 @@ describe('v2 rendered sounds: v1`s synthesized sounds as files', () => {
     );
     expect(voices.effect({ src: 'x.ogg' })).toBe(false);
     expect(voices.effect(null)).toBe(false);
-    expect(voices.pet('owl', 'throw')).toBe(false);
+    expect(voices.pet('owl', 'enter')).toBe(false);
+    expect(voices.pet('owl', 'cheer', 'plain', null)).toBe(false);
+    expect(voices.pet('owl', 'scorch', 'plain', 'petCough')).toBe(true);
     const silent = world({ volume: 0 });
     expect(silent.voices.effect({ builtin: 'fanfare' })).toBe(false);
     expect(silent.helper.play).not.toHaveBeenCalled();
@@ -191,11 +194,13 @@ describe('v2 rendered sounds: v1`s synthesized sounds as files', () => {
     const user = { id: 'u1', color: '#3366cc', getFlag: () => ({ kind: 'frog' }) };
     const pet = createPet({ TabletopObject, dice3d, user, voice });
     await pet.ready;
+    pet.arrive();
+    expect(voice).toHaveBeenLastCalledWith('frog', 'enter', 'plain', undefined);
     pet.act('react', 'crit');
-    expect(voice).toHaveBeenLastCalledWith('frog', 'react', 'crit');
+    expect(voice).toHaveBeenLastCalledWith('frog', 'react', 'crit', undefined);
     pet.act('pet');
-    expect(voice).toHaveBeenLastCalledWith('frog', 'pet', 'plain');
+    expect(voice).toHaveBeenLastCalledWith('frog', 'pet', 'plain', undefined);
     pet.act('no-such-pose');
-    expect(voice).toHaveBeenCalledTimes(2);
+    expect(voice).toHaveBeenCalledTimes(3);
   });
 });
