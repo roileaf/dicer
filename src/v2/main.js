@@ -2,7 +2,9 @@
 // impact sounds, chat messages, game.dice3d); Dicer brings its looks, effects, sounds, pets and
 // tools on top of it, each feature on the DsN API made for it. v1's entry (src/main.js) stays in
 // the tree, unbuilt, while its features are ported one at a time.
+import { DiceMaterial } from 'dice-so-nice/api.js';
 import { registerLighting } from './lighting.js';
+import { registerBodies } from './materials/bodies.js';
 import { registerSounds } from './sounds/register.js';
 
 export const DSN_ID = 'dice-so-nice';
@@ -20,6 +22,12 @@ export function onDiceSoNiceReady(dice3d) {
   } catch (err) {
     console.error('dicer: cannot register the impact sounds', err);
   }
+  // after the sounds: each material names its set of impact sounds
+  try {
+    registerBodies(dice3d, DiceMaterial);
+  } catch (err) {
+    console.error('dicer: cannot register the body materials', err);
+  }
 }
 
 Hooks.once('diceSoNiceReady', (dice3d) => {
@@ -28,5 +36,6 @@ Hooks.once('diceSoNiceReady', (dice3d) => {
 
 Hooks.once('ready', () => {
   if (game.modules.get(DSN_ID)?.active) return;
-  if (game.user?.isGM) ui.notifications.error(game.i18n.localize('DICER.V2.NeedsDsn'), { permanent: true });
+  if (game.user?.isGM)
+    ui.notifications.error(game.i18n.localize('DICER.V2.NeedsDsn'), { permanent: true });
 });

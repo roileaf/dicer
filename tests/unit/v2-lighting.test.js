@@ -20,6 +20,7 @@ describe('v2 studio lighting (DsN 5.3)', () => {
       addEnvironment: () => order.push('environment'),
       addImpactSounds: () => order.push('sounds'),
       addSurface: () => {},
+      addMaterial: () => Promise.resolve(),
     };
     vi.stubGlobal('Hooks', { once: vi.fn() });
     const { onDiceSoNiceReady } = await import('../../src/v2/main.js');

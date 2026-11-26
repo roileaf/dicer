@@ -1544,6 +1544,17 @@
       },
       "Ambiance": {
         "studio": "Studio (Dicer)"
+      },
+      "Material": {
+        "opaque": "Opaque (Dicer)",
+        "metal": "Metal (Dicer)",
+        "marble": "Marble (Dicer)",
+        "pearl": "Pearl (Dicer)",
+        "iridescent": "Iridescent (Dicer)",
+        "gem": "Gemstone (Dicer)",
+        "wood": "Wood (Dicer)",
+        "stone": "Stone (Dicer)",
+        "bone": "Bone (Dicer)"
       }
     }
   }
