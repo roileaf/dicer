@@ -5,7 +5,10 @@ const pct = (v) => Math.round(v * 100);
 
 export function materialSettingsOf(a) {
   const b = a.body;
-  if (b.type === 'jelly') return { roughness: pct(b.roughness) };
+  if (b.type === 'jelly')
+    return typeof b.color2 === 'string'
+      ? { roughness: pct(b.roughness), glow: true, color2: b.color2 }
+      : { roughness: pct(b.roughness) };
   if (b.type === 'resin') {
     const i = a.interior;
     return {

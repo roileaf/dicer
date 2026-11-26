@@ -1558,7 +1558,8 @@
         "stone": "Stone (Dicer)",
         "bone": "Bone (Dicer)",
         "resin": "Clear resin (Dicer)",
-        "jelly": "Jelly (Dicer)"
+        "jelly": "Jelly (Dicer)",
+        "JellyGlow": "Glow in the second colour"
       },
       "Themes": {
         "Menu": "Dicer themes",

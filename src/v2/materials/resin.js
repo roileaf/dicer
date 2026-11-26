@@ -86,16 +86,19 @@ export const RESIN_DEFAULTS = Object.freeze({
   extraDensity: Math.round(D.extraDensity * 100),
   roughness: 5,
 });
-export const JELLY_DEFAULTS = Object.freeze({ roughness: 20 });
+export const JELLY_DEFAULTS = Object.freeze({ roughness: 20, glow: false, color2: '#ffffff' });
 
 const pct = (v, d) => (Number.isFinite(v) ? v : d) / 100;
 
 export function lookOf(type, settings = {}) {
   if (type === 'jelly') {
     const s = { ...JELLY_DEFAULTS, ...settings };
-    return normalizeAppearance({
-      body: { type, roughness: pct(s.roughness, 20) },
-    });
+    return {
+      ...normalizeAppearance({
+        body: { type, roughness: pct(s.roughness, 20), color2: s.color2 },
+      }),
+      jellyGlow: s.glow === true,
+    };
   }
   const s = { ...RESIN_DEFAULTS, ...settings };
   return normalizeAppearance({
@@ -136,7 +139,10 @@ function bodyFromTexel(lighting) {
 }
 
 const JELLY_HUE = /* glsl */ `
-vec3 dcJellyHue( vec3 c ) { return c / max( max( c.r, c.g ), max( c.b, 1e-3 ) ); }
+uniform float uDcJellyOwn;
+vec3 dcJellyHue( vec3 c ) {
+	return mix( uBodyColor2, c / max( max( c.r, c.g ), max( c.b, 1e-3 ) ), uDcJellyOwn );
+}
 `;
 const JELLY_SHEEN = /* glsl */ `
 #ifdef USE_SHEEN
@@ -166,7 +172,11 @@ export function resinGlsl(a, diceType = 'd20') {
   if (jelly) {
     const p = jellyPatch(a);
     defines.push('#define DICER_JELLY');
-    Object.assign(uniforms, p.uniforms);
+    const own = a.jellyGlow !== true;
+    Object.assign(uniforms, p.uniforms, {
+      uBodyColor2: { value: new Color(own ? '#000000' : a.body.color2) },
+      uDcJellyOwn: { value: own ? 1 : 0 },
+    });
     return {
       defines,
       pars: JELLY_HUE,
@@ -274,7 +284,7 @@ export function createResinMaterial(DiceMaterial, type) {
 
   const defaults = jelly ? resinGlsl(lookOf('jelly')).uniforms : insideUniforms();
   for (const [name, { value }] of Object.entries(defaults)) material.addUniform(name, value);
-  material.addUniform('uBodyColor2', new Color('#000000'));
+  if (!jelly) material.addUniform('uBodyColor2', new Color('#000000'));
   material.addUniform('uDcLocalScale', LOCAL_SCALE);
   addFxUniforms(material);
   if (!jelly) {
@@ -320,6 +330,20 @@ export function createResinMaterial(DiceMaterial, type) {
       min: 0,
       max: 100,
       step: 5,
+    });
+  }
+  if (jelly) {
+    material.addSettingBoolean({
+      id: 'glow',
+      name:
+        globalThis.game?.i18n?.localize('DICER.V2.Material.JellyGlow') ??
+        'DICER.V2.Material.JellyGlow',
+      defaultValue: JELLY_DEFAULTS.glow,
+    });
+    material.addSettingColor({
+      id: 'color2',
+      name: L('Body.SecondColor'),
+      defaultValue: JELLY_DEFAULTS.color2,
     });
   }
   const roughness = (jelly ? JELLY_DEFAULTS : RESIN_DEFAULTS).roughness;

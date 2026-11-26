@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
 import { DiceMaterial } from '../../tests/helpers/dsn-api.js';
 import { RESIN_REFRACTION } from '../../src/render/shaders/bodies.js';
+import { BUILTIN_THEMES } from '../../src/themes/themes.js';
+import { materialSettingsOf } from '../../src/v2/themes/dsn-look.js';
 import {
   applyResinSettings,
   createResinMaterial,
@@ -80,7 +82,7 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
       'roughness',
     ]);
     expect(Object.keys(resin.settings[0].options)).toEqual([...INSIDE_TYPES]);
-    expect(jelly.settings.map((s) => s.id)).toEqual(['roughness']);
+    expect(jelly.settings.map((s) => s.id)).toEqual(['glow', 'color2', 'roughness']);
   });
 
   it('declares every uniform any inside reads, so DsN creates them with the material', () => {
@@ -145,6 +147,26 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
     );
     expect(f).toContain('roughnessFactor = max( roughnessFactor, 0.18 );');
     expect(f).not.toContain('DICER_STEPS');
+  });
+
+  it('jelly glows in its own hue, or in a second colour when the look asks for one', () => {
+    const own = resinGlsl(lookOf('jelly', { color2: '#ff00c8' })).uniforms;
+    expect(own.uDcJellyOwn.value).toBe(1);
+    const two = resinGlsl(lookOf('jelly', { glow: true, color2: '#ff00c8' })).uniforms;
+    expect(two.uDcJellyOwn.value).toBe(0);
+    expect(two.uBodyColor2.value.getHexString()).toBe('ff00c8');
+    const f = patchResinShader(physical(), resinGlsl(lookOf('jelly', {}))).fragmentShader;
+    expect(f).toContain('uniform float uDcJellyOwn;');
+    expect(f).toContain(
+      'mix( uBodyColor2, c / max( max( c.r, c.g ), max( c.b, 1e-3 ) ), uDcJellyOwn )',
+    );
+    expect(
+      materialSettingsOf(BUILTIN_THEMES.find((t) => t.id === 'jelly-belly').appearance),
+    ).toEqual({
+      roughness: 0,
+      glow: true,
+      color2: '#ff00c8',
+    });
   });
 
   it('lifts what is seen through the body for DsN`s tone mapping, not the reflections', () => {
