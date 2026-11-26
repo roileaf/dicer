@@ -115,12 +115,20 @@ describe('v2 body materials (DsN 5.1)', () => {
     }
   });
 
-  it('leaves an opaque or polished metal shader alone', () => {
-    const src = physical();
-    const a = patchBodyShader(physical(), bodyGlsl('opaque'));
-    const b = patchBodyShader(physical(), bodyGlsl('metal', 'polished'));
-    expect(a.fragmentShader).toBe(src.fragmentShader);
-    expect(b.fragmentShader).toBe(src.fragmentShader);
+  it('gives every body the effect uniforms v1`s die effects write, with the labels masked', () => {
+    for (const type of BODY_TYPES) {
+      const material = createBodyMaterial(DiceMaterial, type);
+      expect(material._uniforms.get('uFxTint').toArray()).toEqual([0, 0, 0, 0]);
+      expect(material._uniforms.get('uFxFlare').toArray()).toEqual([0, 0, 0]);
+      const f = patchBodyShader(physical(), bodyGlsl(type)).fragmentShader;
+      expect(f).toContain('uniform vec4 uFxTint;');
+      expect(f.indexOf('mix( diffuseColor.rgb, dcTexel.rgb, dcMask )')).toBeLessThan(
+        f.indexOf('uFxTint.a * ( 1.0 - dcMask )'),
+      );
+      expect(f.indexOf('#include <emissivemap_fragment>')).toBeLessThan(
+        f.indexOf('totalEmissiveRadiance += uFxFlare * dcMask'),
+      );
+    }
   });
 
   it('makes the same edits every time (DsN calls the shader callback again for a die`s copy)', () => {

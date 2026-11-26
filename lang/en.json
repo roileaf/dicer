@@ -1567,6 +1567,10 @@
         "UseHint": "This replaces your dice look in Dice So Nice. You can still change every part of it there.",
         "Applied": "Your dice are now {name}.",
         "NoPictures": "Your 3D dice are hidden, so the themes have no pictures."
+      },
+      "Effects": {
+        "trail": "Elemental trail",
+        "impact-sparks": "Impact sparks"
       }
     }
   }

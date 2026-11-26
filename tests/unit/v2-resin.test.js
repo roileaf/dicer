@@ -102,7 +102,7 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
       'uResinRadii',
     ])
       expect(names.has(name)).toBe(true);
-    expect(Object.keys(insideUniforms()).length).toBe(names.size - 2);
+    expect(Object.keys(insideUniforms()).length).toBe(names.size - 4);
   });
 
   it('splices v1`s refraction and every inside`s march into three`s physical shader', () => {

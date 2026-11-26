@@ -1,4 +1,4 @@
-import { Color, Vector4 } from 'three';
+import { Color, Vector3, Vector4 } from 'three';
 import { soundMaterialOf } from '../../audio/sound-material.js';
 import { PRESET_COLORS } from '../../look/body-colors.js';
 import * as bone from '../../render/extras/bodies/bone.js';
@@ -7,7 +7,14 @@ import * as iridescent from '../../render/extras/bodies/iridescent.js';
 import * as metalFinishes from '../../render/extras/bodies/metal-finishes.js';
 import * as stone from '../../render/extras/bodies/stone.js';
 import * as wood from '../../render/extras/bodies/wood.js';
-import { MARBLE_COLOR, PEARL_COLOR, VEIN_SCALE } from '../../render/shaders/bodies.js';
+import {
+  FX_COLOR,
+  FX_EMISSIVE,
+  FX_PARS,
+  MARBLE_COLOR,
+  PEARL_COLOR,
+  VEIN_SCALE,
+} from '../../render/shaders/bodies.js';
 import { NOISE_GLSL } from '../../render/shaders/noise.js';
 import { diceSoundSetId, MODULE_ID } from '../sounds/register.js';
 
@@ -172,7 +179,6 @@ export function bodyGlsl(type, finish = 'polished') {
 }
 
 export function patchBodyShader(shader, glsl) {
-  if (!glsl.color && !glsl.roughness && !glsl.coat) return shader;
   shader.vertexShader = after(
     after(shader.vertexShader, 'common', VERTEX_PARS),
     'begin_vertex',
@@ -183,14 +189,21 @@ export function patchBodyShader(shader, glsl) {
   f = after(
     f,
     'common',
-    `${defines}\n${FRAGMENT_PARS}\n${glsl.noise ? NOISE_GLSL : ''}\n${glsl.pars}`,
+    `${defines}\n${FRAGMENT_PARS}\n${FX_PARS}\n${glsl.noise ? NOISE_GLSL : ''}\n${glsl.pars}`,
   );
-  f = after(f, 'color_fragment', `${LABEL_MASK}\n${glsl.color}\n${LABEL_RESTORE}`);
+  f = after(f, 'color_fragment', `${LABEL_MASK}\n${glsl.color}\n${LABEL_RESTORE}\n${FX_COLOR}`);
+  f = after(f, 'emissivemap_fragment', FX_EMISSIVE);
   if (glsl.roughness) f = after(f, 'roughnessmap_fragment', glsl.roughness);
   if (glsl.metalness) f = after(f, 'metalnessmap_fragment', glsl.metalness);
   if (glsl.coat) f = after(f, 'lights_physical_fragment', glsl.coat);
   shader.fragmentShader = f;
   return shader;
+}
+
+export function addFxUniforms(material) {
+  material.addUniform('uFxTint', new Vector4(0, 0, 0, 0));
+  material.addUniform('uFxFlare', new Vector3(0, 0, 0));
+  return material;
 }
 
 export const L = (k) =>
@@ -216,6 +229,7 @@ export function createBodyMaterial(DiceMaterial, type) {
     material.addUniform(name, value);
   if (type === 'marble') material.addUniform('uVeinScale', VEIN_SCALE);
   material.addUniform('uDcLocalScale', LOCAL_SCALE);
+  addFxUniforms(material);
 
   if (presets.length)
     material.addSettingSelect({

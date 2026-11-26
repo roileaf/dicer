@@ -83,5 +83,14 @@ export class DiceMaterial extends Settings {
 }
 
 export class DiceSystem extends Settings {}
-export class DiceSFX {}
+export class DiceSFX {
+  constructor(box, dicemesh, options = {}) {
+    this.box = box;
+    this.dicemesh = dicemesh;
+    this.options = options;
+    this.moment = 'result';
+    this.hit = null;
+    this.destroyed = false;
+  }
+}
 export class TabletopObject {}

@@ -12,10 +12,13 @@ import {
   RESIN_PARS,
   RESIN_REFRACTION,
   RESIN_UNIFORMS,
+  FX_EMISSIVE,
+  FX_PARS,
 } from '../../render/shaders/bodies.js';
 import { interiorChunk, SHAPE_ROT } from '../../render/shaders/interior.js';
 import { diceSoundSetId } from '../sounds/register.js';
 import {
+  addFxUniforms,
   after,
   bodyMaterialId,
   FRAGMENT_PARS,
@@ -210,6 +213,7 @@ export function patchResinShader(shader, glsl) {
       glsl.defines.join('\n'),
       FRAGMENT_PARS,
       '#define dcRim 0.0',
+      FX_PARS,
       'uniform float uDcResinGain;',
       RESIN_UNIFORMS,
       RESIN_PARS,
@@ -217,6 +221,7 @@ export function patchResinShader(shader, glsl) {
     ].join('\n'),
   );
   f = after(f, 'color_fragment', LABEL_MASK);
+  f = after(f, 'emissivemap_fragment', FX_EMISSIVE);
   if (glsl.roughness) f = after(f, 'roughnessmap_fragment', glsl.roughness);
   if (glsl.coat) f = after(f, 'lights_physical_fragment', glsl.coat);
   f = after(f, 'transmission_fragment', glsl.lighting);
@@ -266,6 +271,7 @@ export function createResinMaterial(DiceMaterial, type) {
   for (const [name, { value }] of Object.entries(defaults)) material.addUniform(name, value);
   material.addUniform('uBodyColor2', new Color('#000000'));
   material.addUniform('uDcLocalScale', LOCAL_SCALE);
+  addFxUniforms(material);
   if (!jelly) {
     const d = RESIN_DEFAULTS;
     material.addSettingSelect(
