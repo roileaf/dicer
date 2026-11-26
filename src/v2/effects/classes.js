@@ -115,18 +115,24 @@ export function shake(box, amount, ms) {
   canvas.animate(frames, { duration: ms });
 }
 
-export function effectContext(sfx, mod, stage, die) {
+export function effectContext(sfx, mod, stage, die, effect = {}) {
   const d = mod.defaults ?? {};
   const num = (v, fallback) => (Number.isFinite(v) ? v : fallback);
+  let color;
+  try {
+    color = new Color(effect.color ?? d.color ?? '#ffffff');
+  } catch {
+    color = new Color('#ffffff');
+  }
   return {
     scene: stage.group,
     camera: sfx.box.camera,
     die,
     position: die.outer.position.clone(),
-    color: new Color(d.color ?? '#ffffff'),
-    intensity: num(d.intensity, 1),
-    duration: Math.max(0, num(d.duration, 1000)),
-    options: {},
+    color,
+    intensity: num(effect.intensity, num(d.intensity, 1)),
+    duration: Math.max(0, num(effect.duration, num(d.duration, 1000))),
+    options: { ...effect },
     get particles() {
       return stage.particles;
     },

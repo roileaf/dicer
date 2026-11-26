@@ -1,5 +1,6 @@
 import { DiceMaterial, DiceSFX } from 'dice-so-nice/api.js';
 import { registerEffectHooks, registerEffects } from './effects/classes.js';
+import { registerReactions } from './effects/reactions.js';
 import { registerLighting } from './lighting.js';
 import { registerBodies } from './materials/bodies.js';
 import { registerInsideMotion, registerResin } from './materials/resin.js';
@@ -39,11 +40,12 @@ Hooks.once('diceSoNiceReady', (dice3d) => {
 
 registerInsideMotion();
 registerEffectHooks();
+const reactions = registerReactions();
 
 Hooks.once('init', () => {
   registerThemeBrowser();
   const module = game.modules.get(MODULE);
-  if (module) module.api = { openThemes: openThemeBrowser };
+  if (module) module.api = { openThemes: openThemeBrowser, playEffect: reactions.play };
 });
 
 Hooks.once('ready', () => {
