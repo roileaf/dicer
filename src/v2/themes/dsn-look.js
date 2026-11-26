@@ -1,5 +1,9 @@
+import { stripActive } from '../../look/appearance.js';
 import { readableNumbers } from '../../look/contrast.js';
 import { BODIES, bodyMaterialId, presetsOf } from '../materials/bodies.js';
+import { detailSettingsOf } from '../materials/details.js';
+import { fontFamilyOf } from './fonts.js';
+import { ICON_FONT, iconsOf, iconSystemId, isRounded } from './icons.js';
 
 const pct = (v) => Math.round(v * 100);
 
@@ -38,22 +42,45 @@ export function materialSettingsOf(a) {
 }
 
 export function dsnLook(a) {
+  const readable = readableNumbers(a);
+  const hollow = a.numbers.fill === 'outline';
+  const lined = !!a.numbers.outline && a.numbers.outlineWidth > 0;
   return {
     colorset: 'custom',
-    system: 'standard',
+    system: isRounded(a) ? 'rounded' : 'standard',
     texture: 'none',
-    font: 'auto',
+    font: fontFamilyOf(a.numbers.font),
     diceColor: a.body.color,
     edgeColor: a.body.color,
-    labelColor: readableNumbers(a).fill,
-    outlineColor: 'none',
+    labelColor: hollow ? a.body.color : readable.fill,
+    outlineColor: hollow
+      ? readable.fill
+      : lined
+        ? a.numbers.outline
+        : a.body.type === 'resin'
+          ? a.body.color2
+          : 'none',
     material: bodyMaterialId(a.body.type),
-    materialSettings: materialSettingsOf(a),
+    materialSettings: {
+      ...materialSettingsOf(a),
+      ...detailSettingsOf(a, readable, stripActive(a)),
+    },
   };
 }
 
 export function dsnAppearance(theme) {
   const out = { global: dsnLook(theme.appearance) };
   for (const [type, a] of Object.entries(theme.perType ?? {})) out[type] = dsnLook(a);
+  const iconLook = theme.perType?.d20 ?? theme.appearance;
+  const icons = iconsOf(iconLook);
+  if (icons) {
+    const d20 = out.d20 ?? out.global;
+    const font = d20.font === 'auto' ? 'Arial' : d20.font;
+    out.d20 = {
+      ...d20,
+      system: iconSystemId(icons, isRounded(iconLook)),
+      font: `${font}, ${ICON_FONT}`,
+    };
+  }
   return out;
 }

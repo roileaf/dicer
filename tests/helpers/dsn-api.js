@@ -82,7 +82,16 @@ export class DiceMaterial extends Settings {
   }
 }
 
-export class DiceSystem extends Settings {}
+export class DiceSystem extends Settings {
+  constructor(id, name, mode = 'default', group = null) {
+    super();
+    Object.assign(this, { id, name, mode, group, mesh: null });
+  }
+  setMesh(name) {
+    this.mesh = name;
+    return this;
+  }
+}
 export class DiceSFX {
   constructor(box, dicemesh, options = {}) {
     this.box = box;

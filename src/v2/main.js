@@ -1,4 +1,4 @@
-import { DiceMaterial, DiceSFX, TabletopObject } from 'dice-so-nice/api.js';
+import { DiceMaterial, DiceSFX, DiceSystem, TabletopObject } from 'dice-so-nice/api.js';
 import { registerEffectHooks, registerEffects } from './effects/classes.js';
 import { createReactions, registerReactions } from './effects/reactions.js';
 import { registerLighting } from './lighting.js';
@@ -10,7 +10,11 @@ import { openPetWindow, registerPetWindow } from './pets/window.js';
 import { registerQuality } from './quality/controller.js';
 import { registerSounds } from './sounds/register.js';
 import { createVoices, registerVoiceSettings } from './sounds/voices.js';
+import { BUILTIN_THEMES } from '../themes/themes.js';
 import { openThemeBrowser, registerThemeBrowser } from './themes/browser.js';
+import { dsnAppearance } from './themes/dsn-look.js';
+import { preloadFonts, registerFonts } from './themes/fonts.js';
+import { registerIconSystems } from './themes/icons.js';
 
 export const DSN_ID = 'dice-so-nice';
 const MODULE = 'dicer';
@@ -33,6 +37,11 @@ export function onDiceSoNiceReady(dice3d) {
     console.error('dicer: cannot register the body materials', err);
   }
   try {
+    registerIconSystems(dice3d, DiceSystem);
+  } catch (err) {
+    console.error('dicer: cannot register the d20 icons', err);
+  }
+  try {
     registerEffects(dice3d, DiceSFX);
   } catch (err) {
     console.error('dicer: cannot register the effects', err);
@@ -52,6 +61,7 @@ registerLaunch();
 const reactions = registerReactions(Hooks, createReactions({ voices }));
 
 Hooks.once('init', () => {
+  preloadFonts(registerFonts());
   registerThemeBrowser();
   registerPetWindow();
   registerVoiceSettings();
@@ -59,6 +69,10 @@ Hooks.once('init', () => {
   if (module)
     module.api = {
       openThemes: openThemeBrowser,
+      themeLook: (id) => {
+        const theme = BUILTIN_THEMES.find((t) => t.id === id);
+        return theme ? dsnAppearance(theme) : null;
+      },
       playEffect: reactions.play,
       openPet: openPetWindow,
       pets,

@@ -13,6 +13,7 @@ import {
   presetsOf,
   registerBodies,
 } from '../../src/v2/materials/bodies.js';
+import { DETAIL_DEFAULTS } from '../../src/v2/materials/details.js';
 
 const physical = () => ({
   uniforms: {},
@@ -71,10 +72,11 @@ describe('v2 body materials (DsN 5.1)', () => {
 
   it('offers v1`s styles, finishes, second colour and roughness as material settings', () => {
     const ids = (t) => createBodyMaterial(DiceMaterial, t).settings.map((s) => s.id);
-    expect(ids('wood')).toEqual(['preset', 'color2', 'roughness']);
-    expect(ids('metal')).toEqual(['finish', 'color2', 'roughness']);
-    expect(ids('iridescent')).toEqual(['preset', 'color2', 'roughness', 'streaks']);
-    expect(ids('opaque')).toEqual(['roughness']);
+    const details = Object.keys(DETAIL_DEFAULTS);
+    expect(ids('wood')).toEqual(['preset', 'color2', 'roughness', ...details]);
+    expect(ids('metal')).toEqual(['finish', 'color2', 'roughness', ...details]);
+    expect(ids('iridescent')).toEqual(['preset', 'color2', 'roughness', 'streaks', ...details]);
+    expect(ids('opaque')).toEqual(['roughness', ...details]);
     const wood = createBodyMaterial(DiceMaterial, 'wood').settings[0];
     expect(Object.keys(wood.options)).toEqual(['oak', 'walnut', 'cherry', 'ebony']);
     expect(wood.options.oak).toBe('DICER.Appearance.Preset.oak');

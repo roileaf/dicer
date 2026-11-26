@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
 import { DiceMaterial } from '../../tests/helpers/dsn-api.js';
 import { RESIN_REFRACTION } from '../../src/render/shaders/bodies.js';
+import { DETAIL_DEFAULTS, detailUniforms } from '../../src/v2/materials/details.js';
 import { BUILTIN_THEMES } from '../../src/themes/themes.js';
 import { materialSettingsOf } from '../../src/v2/themes/dsn-look.js';
 import {
@@ -80,9 +81,15 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
       'extraColor',
       'extraDensity',
       'roughness',
+      ...Object.keys(DETAIL_DEFAULTS),
     ]);
     expect(Object.keys(resin.settings[0].options)).toEqual([...INSIDE_TYPES]);
-    expect(jelly.settings.map((s) => s.id)).toEqual(['glow', 'color2', 'roughness']);
+    expect(jelly.settings.map((s) => s.id)).toEqual([
+      'glow',
+      'color2',
+      'roughness',
+      ...Object.keys(DETAIL_DEFAULTS),
+    ]);
   });
 
   it('declares every uniform any inside reads, so DsN creates them with the material', () => {
@@ -104,7 +111,9 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
       'uResinRadii',
     ])
       expect(names.has(name)).toBe(true);
-    expect(Object.keys(insideUniforms()).length).toBe(names.size - 4);
+    const details = Object.keys(detailUniforms()).filter((n) => names.has(n)).length;
+    expect(details).toBe(Object.keys(detailUniforms()).length);
+    expect(Object.keys(insideUniforms()).length).toBe(names.size - 4 - details);
   });
 
   it('splices v1`s refraction and every inside`s march into three`s physical shader', () => {

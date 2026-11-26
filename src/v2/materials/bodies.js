@@ -17,6 +17,20 @@ import {
 } from '../../render/shaders/bodies.js';
 import { NOISE_GLSL } from '../../render/shaders/noise.js';
 import { diceSoundSetId, MODULE_ID } from '../sounds/register.js';
+import {
+  addDetailSettings,
+  addDetailUniforms,
+  applyDetailSettings,
+  DETAIL_BEGIN,
+  DETAIL_COAT,
+  DETAIL_COLOR,
+  DETAIL_EMISSIVE,
+  DETAIL_MASK,
+  DETAIL_METALNESS,
+  DETAIL_PARS,
+  DETAIL_ROUGHNESS,
+  setFaceUniforms,
+} from './details.js';
 
 export const LOCAL_SCALE = 60;
 const radii = new WeakMap();
@@ -36,6 +50,7 @@ export function trackLocalScale(mat) {
   mat.onBeforeRender = function (_renderer, _scene, _camera, geometry) {
     const u = this.userData.uniforms?.uDcLocalScale;
     if (u) u.value = localScaleOf(geometry);
+    setFaceUniforms(this.userData.uniforms, geometry);
   };
 }
 
@@ -115,19 +130,22 @@ export const VERTEX = /* glsl */ `
 export const FRAGMENT_PARS = /* glsl */ `
 varying vec3 vLocalPos;
 uniform vec3 uBodyColor2;
-#define vFaceId 0.0
-#define vEdgeDist 1.0
+${DETAIL_PARS}
+#define vFaceId dcFaceV
+#define vEdgeDist dcEdgeV
 #define vFaceUV ( vLocalPos.xy )
 #define dcD ( - 1.0 )
 float dcBorderH( float e ) { return 0.0; }
 `;
 
 export const LABEL_MASK = /* glsl */ `
+${DETAIL_BEGIN}
 	vec4 dcTexel = diffuseColor;
 	float dcMask = 0.0;
 #ifdef USE_EMISSIVEMAP
 	dcMask = smoothstep( 0.02, 0.2, texture2D( emissiveMap, vEmissiveMapUv ).r );
 #endif
+${DETAIL_MASK}
 `;
 export const LABEL_RESTORE = /* glsl */ `
 	diffuseColor.rgb = mix( diffuseColor.rgb, dcTexel.rgb, dcMask );
@@ -191,11 +209,15 @@ export function patchBodyShader(shader, glsl) {
     'common',
     `${defines}\n${FRAGMENT_PARS}\n${FX_PARS}\n${glsl.noise ? NOISE_GLSL : ''}\n${glsl.pars}`,
   );
-  f = after(f, 'color_fragment', `${LABEL_MASK}\n${glsl.color}\n${LABEL_RESTORE}\n${FX_COLOR}`);
-  f = after(f, 'emissivemap_fragment', FX_EMISSIVE);
-  if (glsl.roughness) f = after(f, 'roughnessmap_fragment', glsl.roughness);
-  if (glsl.metalness) f = after(f, 'metalnessmap_fragment', glsl.metalness);
-  if (glsl.coat) f = after(f, 'lights_physical_fragment', glsl.coat);
+  f = after(
+    f,
+    'color_fragment',
+    `${LABEL_MASK}\n${glsl.color}\n${LABEL_RESTORE}\n${DETAIL_COLOR}\n${FX_COLOR}`,
+  );
+  f = after(f, 'emissivemap_fragment', `${DETAIL_EMISSIVE}\n${FX_EMISSIVE}`);
+  f = after(f, 'roughnessmap_fragment', `${glsl.roughness}\n${DETAIL_ROUGHNESS}`);
+  f = after(f, 'metalnessmap_fragment', `${glsl.metalness}\n${DETAIL_METALNESS}`);
+  f = after(f, 'lights_physical_fragment', `${DETAIL_COAT}\n${glsl.coat}`);
   shader.fragmentShader = f;
   return shader;
 }
@@ -208,6 +230,9 @@ export function addFxUniforms(material) {
 
 export const L = (k) =>
   globalThis.game?.i18n?.localize(`DICER.Appearance.${k}`) ?? `DICER.Appearance.${k}`;
+
+export const V = (k) =>
+  globalThis.game?.i18n?.localize(`DICER.V2.Material.${k}`) ?? `DICER.V2.Material.${k}`;
 
 export function createBodyMaterial(DiceMaterial, type) {
   const spec = BODIES[type];
@@ -230,6 +255,7 @@ export function createBodyMaterial(DiceMaterial, type) {
   if (type === 'marble') material.addUniform('uVeinScale', VEIN_SCALE);
   material.addUniform('uDcLocalScale', LOCAL_SCALE);
   addFxUniforms(material);
+  addDetailUniforms(material);
 
   if (presets.length)
     material.addSettingSelect({
@@ -262,9 +288,12 @@ export function createBodyMaterial(DiceMaterial, type) {
   if (type === 'iridescent')
     material.addSettingBoolean({ id: 'streaks', name: L('Body.LayerLines'), defaultValue: true });
 
-  material.registerProcessMaterialCallback((_diceType, mat, appearance) =>
-    applySettings(type, mat, appearance?.materialSettings ?? {}),
-  );
+  addDetailSettings(material, L, V);
+
+  material.registerProcessMaterialCallback((_diceType, mat, appearance) => {
+    applySettings(type, mat, appearance?.materialSettings ?? {});
+    applyDetailSettings(mat, appearance?.materialSettings ?? {}, appearance, type);
+  });
   material.registerBeforeShaderCompileCallback((shader, mat) => {
     patchBodyShader(shader, bodyGlsl(type, mat.userData.appearance?.materialSettings?.finish));
   });

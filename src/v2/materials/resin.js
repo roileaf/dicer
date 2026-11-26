@@ -17,6 +17,16 @@ import {
 } from '../../render/shaders/bodies.js';
 import { interiorChunk, SHAPE_ROT } from '../../render/shaders/interior.js';
 import { tierConfig } from '../quality/state.js';
+import {
+  addDetailSettings,
+  addDetailUniforms,
+  applyDetailSettings,
+  DETAIL_COAT,
+  DETAIL_COLOR,
+  DETAIL_EMISSIVE,
+  DETAIL_METALNESS,
+  DETAIL_ROUGHNESS,
+} from './details.js';
 import { diceSoundSetId } from '../sounds/register.js';
 import {
   addFxUniforms,
@@ -28,6 +38,7 @@ import {
   LOCAL_SCALE,
   localScaleOf,
   trackLocalScale,
+  V,
   VERTEX,
   VERTEX_PARS,
 } from './bodies.js';
@@ -235,14 +246,23 @@ export function patchResinShader(shader, glsl) {
       glsl.pars,
     ].join('\n'),
   );
-  f = after(f, 'color_fragment', LABEL_MASK);
-  f = after(f, 'emissivemap_fragment', FX_EMISSIVE);
-  if (glsl.roughness) f = after(f, 'roughnessmap_fragment', glsl.roughness);
-  if (glsl.coat) f = after(f, 'lights_physical_fragment', glsl.coat);
-  f = after(f, 'transmission_fragment', glsl.lighting);
+  f = after(f, 'color_fragment', `${LABEL_MASK}\n${DETAIL_COLOR}`);
+  f = after(f, 'emissivemap_fragment', `${DETAIL_EMISSIVE}\n${FX_EMISSIVE}`);
+  f = after(f, 'roughnessmap_fragment', `${glsl.roughness ?? ''}\n${DETAIL_ROUGHNESS}`);
+  f = after(f, 'metalnessmap_fragment', DETAIL_METALNESS);
+  f = after(f, 'lights_physical_fragment', `${DETAIL_COAT}\n${glsl.coat ?? ''}`);
+  f = after(f, 'transmission_fragment', `${glsl.lighting}\n${STRIP_LIT}`);
+  f = f.replace(
+    '#include <transmission_fragment>',
+    '\tvec3 dcEdgeLit = totalDiffuse;\n#include <transmission_fragment>',
+  );
   shader.fragmentShader = f;
   return shader;
 }
+
+const STRIP_LIT = /* glsl */ `
+	totalDiffuse = mix( totalDiffuse, dcEdgeLit, dcEdge );
+`;
 
 const select = (id, name, list, key, defaultValue) => ({
   id,
@@ -287,6 +307,7 @@ export function createResinMaterial(DiceMaterial, type) {
   if (!jelly) material.addUniform('uBodyColor2', new Color('#000000'));
   material.addUniform('uDcLocalScale', LOCAL_SCALE);
   addFxUniforms(material);
+  addDetailUniforms(material);
   if (!jelly) {
     const d = RESIN_DEFAULTS;
     material.addSettingSelect(
@@ -356,9 +377,12 @@ export function createResinMaterial(DiceMaterial, type) {
     step: 5,
   });
 
-  material.registerProcessMaterialCallback((diceType, mat, appearance) =>
-    applyResinSettings(type, mat, diceType, appearance?.materialSettings ?? {}),
-  );
+  addDetailSettings(material, L, V);
+
+  material.registerProcessMaterialCallback((diceType, mat, appearance) => {
+    applyResinSettings(type, mat, diceType, appearance?.materialSettings ?? {});
+    applyDetailSettings(mat, appearance?.materialSettings ?? {}, appearance);
+  });
   material.registerBeforeShaderCompileCallback((shader, mat, diceType) => {
     patchResinShader(
       shader,

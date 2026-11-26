@@ -23,7 +23,7 @@ const defs = {
   'galaxy-nebula': make('Galaxy Nebula', {
     body: { type: 'resin', color: '#1b1b5e', color2: '#07072a', roughness: 0.05 },
     interior: { type: 'nebula', colors: ['#c04dff', '#2fd0f0'], density: 0.65 },
-    numbers: { fill: 'silver', color: '#e8ecff', depth: 0.5 },
+    numbers: { fill: 'enamel', color: '#ffffff', depth: 0.5 },
   }),
   'sharp-crystal': make('Sharp Crystal', {
     body: { type: 'resin', color: '#58c0d6', color2: '#2a7890', roughness: 0.02 },
