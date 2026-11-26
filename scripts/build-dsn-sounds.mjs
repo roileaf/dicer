@@ -9,6 +9,44 @@ const LEAD = 0.01;
 const TAIL = 0.03;
 const OUT_DIR = 'assets/sounds/dsn';
 
+export const DICE_COLOUR = {
+  plastic: {},
+  glass: {
+    rate: 1.3,
+    filters: [
+      { type: 'highpass', frequency: 700 },
+      { type: 'peaking', frequency: 5000, Q: 2, gain: 8 },
+      { type: 'ring', delays: [6, 11], decays: [0.45, 0.3] },
+    ],
+    db: -3,
+  },
+  metal: {
+    rate: 1.15,
+    filters: [
+      { type: 'highpass', frequency: 400 },
+      { type: 'peaking', frequency: 2600, Q: 3, gain: 8 },
+      { type: 'highshelf', frequency: 6000, gain: 5 },
+      { type: 'ring', delays: [10, 17], decays: [0.4, 0.25] },
+    ],
+    db: -3,
+  },
+  wood: {
+    rate: 0.82,
+    filters: [
+      { type: 'lowpass', frequency: 2400 },
+      { type: 'peaking', frequency: 250, Q: 1, gain: 6 },
+    ],
+  },
+  stone: {
+    rate: 0.92,
+    filters: [
+      { type: 'lowpass', frequency: 5000 },
+      { type: 'peaking', frequency: 1500, Q: 1.5, gain: 6 },
+    ],
+  },
+  squishy: MATERIAL_COLOUR.squishy,
+};
+
 export const TABLE_COLOUR = {
   felt: {},
   wood: {
@@ -91,7 +129,7 @@ function main() {
   const hard = JSON.parse(readFileSync(`${root}assets/sounds/dice-hits.json`, 'utf8'));
   const felt = JSON.parse(readFileSync(`${root}assets/sounds/dice-hits-felt.json`, 'utf8'));
   const manifest = { dice: {}, table: {} };
-  for (const [name, colour] of Object.entries(MATERIAL_COLOUR)) {
+  for (const [name, colour] of Object.entries(DICE_COLOUR)) {
     render(`${root}assets/sounds/dice-hits.mp3`, `${root}${OUT_DIR}/dice-${name}.ogg`, colour);
     manifest.dice[name] = {
       file: `${OUT_DIR}/dice-${name}.ogg`,
