@@ -1,0 +1,28 @@
+<div class="dicer-theme-browser-body">
+  <p class="dicer-hint">{{localize "DICER.Appearance.Pet.Hint"}}</p>
+  <div class="form-group">
+    <label for="dicer-pet-kind">{{localize "DICER.PetWindow.Title"}}</label>
+    <div class="form-fields">
+      <select id="dicer-pet-kind" name="kind">
+        {{#each kinds}}<option value="{{kind}}"{{#if selected}} selected{{/if}}>{{label}}</option>{{/each}}
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="dicer-pet-color">{{localize "DICER.Appearance.Body.Color"}}</label>
+    <div class="form-fields">
+      <input id="dicer-pet-color" type="color" name="color" value="{{color}}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="dicer-pet-natural">{{localize "DICER.Appearance.Pet.Natural"}}</label>
+    <div class="form-fields">
+      <input id="dicer-pet-natural" type="checkbox" name="natural"{{#if natural}} checked{{/if}}>
+    </div>
+    <p class="hint">{{localize "DICER.Appearance.Pet.NaturalHint"}}</p>
+  </div>
+  <p class="dicer-hint">{{localize "DICER.V2.Pets.MoveHint"}}</p>
+  <footer class="form-footer">
+    <button type="submit" class="bright"><i class="fa-solid fa-floppy-disk"></i> {{localize "DICER.V2.Pets.Save"}}</button>
+  </footer>
+</div>

@@ -93,4 +93,49 @@ export class DiceSFX {
     this.destroyed = false;
   }
 }
-export class TabletopObject {}
+export class TabletopObject {
+  static OBJECT_EVENT_TYPE = { HIT: 0, FRAME: 1, CLICK: 2 };
+
+  constructor(id) {
+    this.id = id;
+    this.model = null;
+    this.modelSource = null;
+    this.collider = null;
+    this.position = { x: 0.5, y: 0.5 };
+    this.rotation = 0;
+    this.animated = false;
+    this.persistent = false;
+    this.listeners = {};
+  }
+  setModel(model) {
+    this.modelSource = model;
+    if (model && typeof model === 'object') this.model = model;
+    return this;
+  }
+  setCollider(shapes) {
+    this.collider = shapes;
+    return this;
+  }
+  setPosition(position) {
+    this.position = { ...position };
+    return this;
+  }
+  setRotation(angle) {
+    this.rotation = angle;
+    return this;
+  }
+  setAnimated(animated = true) {
+    this.animated = animated;
+    return this;
+  }
+  setPersistent(persistent = true) {
+    this.persistent = persistent;
+    return this;
+  }
+  on(type, listener) {
+    (this.listeners[type] ??= []).push(listener);
+  }
+  emit(type, event = {}) {
+    for (const listener of this.listeners[type] ?? []) listener({ object: this, ...event });
+  }
+}

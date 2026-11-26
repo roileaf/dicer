@@ -1,9 +1,11 @@
-import { DiceMaterial, DiceSFX } from 'dice-so-nice/api.js';
+import { DiceMaterial, DiceSFX, TabletopObject } from 'dice-so-nice/api.js';
 import { registerEffectHooks, registerEffects } from './effects/classes.js';
 import { registerReactions } from './effects/reactions.js';
 import { registerLighting } from './lighting.js';
 import { registerBodies } from './materials/bodies.js';
 import { registerInsideMotion, registerResin } from './materials/resin.js';
+import { registerPets } from './pets/pets.js';
+import { openPetWindow, registerPetWindow } from './pets/window.js';
 import { registerQuality } from './quality/controller.js';
 import { registerSounds } from './sounds/register.js';
 import { openThemeBrowser, registerThemeBrowser } from './themes/browser.js';
@@ -42,12 +44,20 @@ Hooks.once('diceSoNiceReady', (dice3d) => {
 registerInsideMotion();
 registerEffectHooks();
 registerQuality();
+const pets = registerPets(TabletopObject);
 const reactions = registerReactions();
 
 Hooks.once('init', () => {
   registerThemeBrowser();
+  registerPetWindow();
   const module = game.modules.get(MODULE);
-  if (module) module.api = { openThemes: openThemeBrowser, playEffect: reactions.play };
+  if (module)
+    module.api = {
+      openThemes: openThemeBrowser,
+      playEffect: reactions.play,
+      openPet: openPetWindow,
+      pets,
+    };
 });
 
 Hooks.once('ready', () => {
