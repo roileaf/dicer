@@ -1,9 +1,9 @@
 import { Group, Vector3 } from 'three';
 import { createImpactFx, createParticlePool } from '../../effects/library/particles.js';
 import { createTrailFx } from '../../effects/library/trails.js';
+import { tierConfig } from '../quality/state.js';
 
 export const V1_D6_EDGE = 2 / Math.sqrt(3);
-export const TIER = Object.freeze({ effectBudget: 10, particleScale: 1 });
 const POOL_CAPACITY = 2048;
 const SIZE_LINE = 'aSize * mix(';
 
@@ -62,7 +62,7 @@ function createStage(box) {
   };
   const deps = {
     getPool,
-    getTier: () => TIER,
+    getTier: tierConfig,
     now: () => performance.now(),
     reducedMotion,
     setting: () => undefined,

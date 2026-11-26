@@ -21,13 +21,8 @@ import {
   trailClass,
   v1Die,
 } from '../../src/v2/effects/classes.js';
-import {
-  scalePoolSizes,
-  stageOf,
-  stageScale,
-  TIER,
-  V1_D6_EDGE,
-} from '../../src/v2/effects/stage.js';
+import { scalePoolSizes, stageOf, stageScale, V1_D6_EDGE } from '../../src/v2/effects/stage.js';
+import { TIERS } from '../../src/render/quality.js';
 import { DiceSFX } from '../helpers/dsn-api.js';
 
 const EDGE = 0.04;
@@ -154,7 +149,7 @@ describe('v2 effects as DsN effect classes (DsN 5.6)', () => {
       'ff0000',
       2,
       500,
-      TIER,
+      TIERS.high,
     ]);
     const now = vi.spyOn(performance, 'now');
     now.mockReturnValue(1000);

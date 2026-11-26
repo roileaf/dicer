@@ -4,7 +4,8 @@ import { BURSTS } from '../../effects/library/bursts.js';
 import { CATALOGUE } from '../../effects/library/catalogue.js';
 import { DIE_EFFECTS } from '../../effects/library/die-effects.js';
 import { localScaleOf } from '../materials/bodies.js';
-import { reducedMotion, stageOf, TIER } from './stage.js';
+import { tierConfig } from '../quality/state.js';
+import { reducedMotion, stageOf } from './stage.js';
 
 export const EFFECTS = Object.freeze({ ...DIE_EFFECTS, ...CATALOGUE, ...BURSTS });
 export const TRAIL_ID = 'DicerTrail';
@@ -136,7 +137,7 @@ export function effectContext(sfx, mod, stage, die, effect = {}) {
     get particles() {
       return stage.particles;
     },
-    tier: TIER,
+    tier: tierConfig(),
     isolate: (target) => (target === die ? fxUniforms(sfx.dicemesh) : null),
     shake: (amount, ms) => shake(sfx.box, amount, ms),
     reducedMotion: reducedMotion(),

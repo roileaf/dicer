@@ -16,6 +16,7 @@ import {
   FX_PARS,
 } from '../../render/shaders/bodies.js';
 import { interiorChunk, SHAPE_ROT } from '../../render/shaders/interior.js';
+import { tierConfig } from '../quality/state.js';
 import { diceSoundSetId } from '../sounds/register.js';
 import {
   addFxUniforms,
@@ -61,7 +62,11 @@ export const INSIDE_SHAPES = Object.freeze([
 const INCLUSIONS = ['flower', 'moss', 'butterfly'];
 const EXTRAS = ['none', ...EXTRA_KINDS];
 
-export const FLAGS = Object.freeze({ interiors: true, interiorSteps: 32, insideMotion: true });
+export const flags = () => ({
+  interiors: true,
+  interiorSteps: tierConfig().interiorSteps,
+  insideMotion: true,
+});
 
 const KEY_LIGHT_DIR = [-6, 4, 2].map((v) => v / Math.hypot(-6, 4, 2));
 
@@ -176,11 +181,11 @@ export function resinGlsl(a, diceType = 'd20') {
   let lighting = RESIN_REFRACTION;
   let live = false;
   if (a.interior.type !== 'none') {
-    const p = insidePatch(a, FLAGS);
+    const p = insidePatch(a, flags());
     const interior = p.interior ?? interiorChunk(a.interior.type, a.interior.shape);
     defines.push(
       '#define DICER_INTERIOR',
-      `#define DICER_STEPS ${FLAGS.interiorSteps}`,
+      `#define DICER_STEPS ${flags().interiorSteps}`,
       ...Object.keys(p.defines ?? {}).map((d) => `#define ${d}`),
     );
     pars = interior.pars;
@@ -194,7 +199,7 @@ export function resinGlsl(a, diceType = 'd20') {
       uShapeRot: { value: new Matrix3().fromArray(coin ? SHAPE_ROT.coin : SHAPE_ROT.die) },
       ...p.uniforms,
     });
-    live = insideMotion.wants(a, FLAGS);
+    live = insideMotion.wants(a, flags());
   }
   return { defines, pars, roughness: '', lighting: bodyFromTexel(lighting), uniforms, live };
 }

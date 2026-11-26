@@ -4,6 +4,7 @@ import { registerReactions } from './effects/reactions.js';
 import { registerLighting } from './lighting.js';
 import { registerBodies } from './materials/bodies.js';
 import { registerInsideMotion, registerResin } from './materials/resin.js';
+import { registerQuality } from './quality/controller.js';
 import { registerSounds } from './sounds/register.js';
 import { openThemeBrowser, registerThemeBrowser } from './themes/browser.js';
 
@@ -40,6 +41,7 @@ Hooks.once('diceSoNiceReady', (dice3d) => {
 
 registerInsideMotion();
 registerEffectHooks();
+registerQuality();
 const reactions = registerReactions();
 
 Hooks.once('init', () => {
