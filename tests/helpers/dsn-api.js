@@ -18,7 +18,10 @@ class Settings {
   _buildSettingsLine(setting, diceType, value, inputGroup) {
     if (setting.type === 'html') return { content: setting.name, data: {} };
     const name = `appearance[${diceType}][${inputGroup}][${setting.id}]`;
-    return { content: `<input name="${name}">`, data: { value, name } };
+    return {
+      content: `<label>${setting.name}</label><input name="${name}">`,
+      data: { value, name },
+    };
   }
   _buildSettingsContent() {
     return { content: 'base', data: {} };

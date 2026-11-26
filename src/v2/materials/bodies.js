@@ -291,6 +291,7 @@ export function createBodyMaterial(DiceMaterial, type) {
   if (type === 'iridescent')
     material.addSettingBoolean({ id: 'streaks', name: L('Body.LayerLines'), defaultValue: true });
 
+  if (type === 'metal') material.showWhen('color2', 'finish', 'patina', 'worn');
   addDetailSettings(material, L, V);
 
   material.registerProcessMaterialCallback((_diceType, mat, appearance) => {

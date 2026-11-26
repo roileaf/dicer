@@ -349,6 +349,7 @@ export function createResinMaterial(DiceMaterial, type) {
       name: L('Inside.Sand'),
       defaultValue: d.sand,
     });
+    material.labelWhen('insideColor', L('Inside.IrisColor'), 'inside', 'eye');
     material.showWhen('shape', 'inside', 'shape');
     material.showWhen('inclusion', 'inside', 'botanical');
     material.showWhen('bubble', 'inside', 'liquid');

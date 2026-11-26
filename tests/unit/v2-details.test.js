@@ -22,7 +22,11 @@ import {
   patchResinShader,
   resinGlsl,
 } from '../../src/v2/materials/resin.js';
-import { conditionCss, dicerMaterialClass } from '../../src/v2/materials/settings-window.js';
+import {
+  conditionCss,
+  dicerMaterialClass,
+  labelCss,
+} from '../../src/v2/materials/settings-window.js';
 import { dsnAppearance, dsnLook } from '../../src/v2/themes/dsn-look.js';
 import {
   FONTS,
@@ -404,6 +408,42 @@ describe('v2 material settings window: Dicer`s own layout inside DsN`s dialog', 
     expect(css).toContain(
       `${root}:has(input[name$="[glow]"]:checked) .dicer-ms-row[data-setting="color2"]{display:block}`,
     );
+  });
+
+  it('shows metal`s second colour only for the aged finishes, as v1 does', () => {
+    const metal = createBodyMaterial(DiceMaterial, 'metal');
+    expect(metal._conditions[0]).toEqual({
+      row: 'color2',
+      parent: 'finish',
+      values: ['patina', 'worn'],
+      show: true,
+    });
+    expect(
+      createBodyMaterial(DiceMaterial, 'wood')._conditions.some((c) => c.row === 'color2'),
+    ).toBe(false);
+  });
+
+  it('calls the main inside colour the iris colour for the Eye inside', () => {
+    const material = resin();
+    expect(material._labels).toEqual([
+      {
+        row: 'insideColor',
+        label: 'DICER.Appearance.Inside.IrisColor',
+        parent: 'inside',
+        values: ['eye'],
+      },
+    ]);
+    const html = content(material).content;
+    expect(html).toContain(
+      '<label><span class="dicer-ms-main">DICER.Appearance.Inside.MainColor</span><span class="dicer-ms-alt">DICER.Appearance.Inside.IrisColor</span></label>',
+    );
+    const css = labelCss('dicer.body-resin', material._labels);
+    const root = '[data-materialsettings="dicer.body-resin"]';
+    const picked = `${root}:has(select[name$="[inside]"] option[value="eye"]:checked) .dicer-ms-row[data-setting="insideColor"]`;
+    expect(css).toContain(`${root} .dicer-ms-alt{display:none}`);
+    expect(css).toContain(`${picked} .dicer-ms-alt{display:inline}`);
+    expect(css).toContain(`${picked} .dicer-ms-main{display:none}`);
+    expect(labelCss('x', [])).toBe('');
   });
 
   it('declares what depends on what, for settings the material has', () => {
