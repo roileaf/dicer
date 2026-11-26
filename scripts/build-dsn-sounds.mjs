@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { MATERIAL_COLOUR, SURFACE_COLOUR } from '../src/audio/sound-engine.js';
+import { MATERIAL_COLOUR } from '../src/audio/sound-engine.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const RATE = 48000;
@@ -9,9 +9,39 @@ const LEAD = 0.01;
 const TAIL = 0.03;
 const OUT_DIR = 'assets/sounds/dsn';
 
+export const TABLE_COLOUR = {
+  felt: {},
+  wood: {
+    rate: 0.85,
+    filters: [
+      { type: 'lowpass', frequency: 2600 },
+      { type: 'peaking', frequency: 220, Q: 1, gain: 6 },
+    ],
+  },
+  stone: {
+    rate: 1,
+    filters: [
+      { type: 'highpass', frequency: 350 },
+      { type: 'highshelf', frequency: 3500, gain: 6 },
+    ],
+  },
+  metal: {
+    rate: 1.25,
+    filters: [
+      { type: 'highpass', frequency: 500 },
+      { type: 'peaking', frequency: 2800, Q: 3, gain: 9 },
+      { type: 'highshelf', frequency: 6000, gain: 6 },
+      { type: 'ring', delays: [9, 15], decays: [0.4, 0.25] },
+    ],
+    db: -3,
+  },
+};
+
 export function ffmpegFilter(f) {
   if (f.type === 'lowpass')
     return `lowpass=f=${f.frequency}${f.Q ? `:width_type=q:width=${f.Q}` : ''}`;
+  if (f.type === 'highpass') return `highpass=f=${f.frequency}`;
+  if (f.type === 'ring') return `aecho=0.9:0.9:${f.delays.join('|')}:${f.decays.join('|')}`;
   if (f.type === 'highshelf') return `highshelf=f=${f.frequency}:g=${f.gain}`;
   if (f.type === 'peaking')
     return `equalizer=f=${f.frequency}:width_type=q:width=${f.Q ?? 1}:g=${f.gain}`;
@@ -68,7 +98,7 @@ function main() {
       hits: hitSpans(hard.hits, colour.rate),
     };
   }
-  for (const [name, colour] of Object.entries(SURFACE_COLOUR)) {
+  for (const [name, colour] of Object.entries(TABLE_COLOUR)) {
     const fromFelt = name === 'felt';
     const src = fromFelt ? 'dice-hits-felt.mp3' : 'dice-hits.mp3';
     render(
@@ -78,7 +108,7 @@ function main() {
     );
     manifest.table[name] = {
       file: `${OUT_DIR}/table-${name}.ogg`,
-      hits: hitSpans((fromFelt ? felt : hard).hits),
+      hits: hitSpans((fromFelt ? felt : hard).hits, colour.rate),
     };
   }
   const js = `export const SOUND_SPRITES = ${JSON.stringify(manifest)};\n`;

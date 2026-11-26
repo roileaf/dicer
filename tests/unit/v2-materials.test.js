@@ -71,13 +71,24 @@ describe('v2 body materials (DsN 5.1)', () => {
   });
 
   it('offers v1`s styles, finishes, second colour and roughness as material settings', () => {
-    const ids = (t) => createBodyMaterial(DiceMaterial, t).settings.map((s) => s.id);
+    const ids = (t) =>
+      createBodyMaterial(DiceMaterial, t)
+        .settings.map((s) => s.id)
+        .filter(Boolean);
     const details = Object.keys(DETAIL_DEFAULTS);
     expect(ids('wood')).toEqual(['preset', 'color2', 'roughness', ...details]);
     expect(ids('metal')).toEqual(['finish', 'color2', 'roughness', ...details]);
     expect(ids('iridescent')).toEqual(['preset', 'color2', 'roughness', 'streaks', ...details]);
     expect(ids('opaque')).toEqual(['roughness', ...details]);
-    const wood = createBodyMaterial(DiceMaterial, 'wood').settings[0];
+    const all = createBodyMaterial(DiceMaterial, 'wood').settings;
+    const wood = all.find((s) => s.id === 'preset');
+    expect(all.filter((s) => s.type === 'separator').map((s) => s.name)).toEqual([
+      'DICER.Appearance.Section.body',
+      'DICER.Appearance.Section.numbers',
+      'DICER.Appearance.Section.glow',
+      'DICER.Appearance.Edges.Strip',
+    ]);
+    expect(all[0].type).toBe('separator');
     expect(Object.keys(wood.options)).toEqual(['oak', 'walnut', 'cherry', 'ebony']);
     expect(wood.options.oak).toBe('DICER.Appearance.Preset.oak');
   });

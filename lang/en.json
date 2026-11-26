@@ -1560,7 +1560,10 @@
         "resin": "Clear resin (Dicer)",
         "jelly": "Jelly (Dicer)",
         "JellyGlow": "Glow in the second colour",
-        "StripWidth": "Edge strips: Width"
+        "Style": "Style",
+        "Width": "Width",
+        "Suspended": "Suspended in the resin",
+        "StripHint": "A band along every edge of the die."
       },
       "Themes": {
         "Menu": "Dicer themes",

@@ -27,6 +27,7 @@ import {
   DETAIL_METALNESS,
   DETAIL_ROUGHNESS,
 } from './details.js';
+import { dicerMaterialClass } from './settings-window.js';
 import { diceSoundSetId } from '../sounds/register.js';
 import {
   addFxUniforms,
@@ -296,7 +297,8 @@ export function createResinMaterial(DiceMaterial, type) {
   const base = jelly
     ? { ...jellyPatch({ body: { type, color2: '#ffffff' } }).params, roughness: 0.2 }
     : { ior: RESIN.ior, roughness: 0.05, clearcoat: 1, clearcoatRoughness: RESIN.coatRoughness };
-  const material = new DiceMaterial(bodyMaterialId(type), `DICER.V2.Material.${type}`)
+  const Material = dicerMaterialClass(DiceMaterial);
+  const material = new Material(bodyMaterialId(type), `DICER.V2.Material.${type}`)
     .setBase('physical', base)
     .setFallback('resin')
     .setImpactSounds(diceSoundSetId(soundMaterialOf({ body: { type } })))
@@ -310,6 +312,7 @@ export function createResinMaterial(DiceMaterial, type) {
   addDetailUniforms(material);
   if (!jelly) {
     const d = RESIN_DEFAULTS;
+    material.addSettingSeparator({ name: L('Section.inside') });
     material.addSettingSelect(
       select('inside', 'Inside.Type', INSIDE_TYPES, 'InsideType', d.inside),
     );
@@ -331,13 +334,28 @@ export function createResinMaterial(DiceMaterial, type) {
       max: 100,
       step: 5,
     });
+    material.addSettingBoolean({ id: 'motion', name: L('Inside.Motion'), defaultValue: d.motion });
     material.addSettingSelect(select('shape', 'Inside.Shape', INSIDE_SHAPES, 'Shape', d.shape));
     material.addSettingSelect(
       select('inclusion', 'Inside.Inclusion', INCLUSIONS, 'Inclusion', d.inclusion),
     );
-    material.addSettingBoolean({ id: 'bubble', name: L('Inside.Bubble'), defaultValue: d.bubble });
-    material.addSettingBoolean({ id: 'sand', name: L('Inside.Sand'), defaultValue: d.sand });
-    material.addSettingBoolean({ id: 'motion', name: L('Inside.Motion'), defaultValue: d.motion });
+    material.addSettingBoolean({
+      id: 'bubble',
+      name: L('Inside.Bubble'),
+      defaultValue: d.bubble,
+    });
+    material.addSettingBoolean({
+      id: 'sand',
+      name: L('Inside.Sand'),
+      defaultValue: d.sand,
+    });
+    material.showWhen('shape', 'inside', 'shape');
+    material.showWhen('inclusion', 'inside', 'botanical');
+    material.showWhen('bubble', 'inside', 'liquid');
+    material.showWhen('sand', 'inside', 'liquid');
+    for (const row of ['insideColor', 'insideColor2', 'density', 'motion'])
+      material.hideWhen(row, 'inside', 'none');
+    material.addSettingSeparator({ name: V('Suspended') });
     material.addSettingSelect(select('extra', 'Inside.Extra', EXTRAS, 'Extra', d.extra));
     material.addSettingColor({
       id: 'extraColor',
@@ -353,6 +371,11 @@ export function createResinMaterial(DiceMaterial, type) {
       step: 5,
     });
   }
+  if (!jelly) {
+    material.hideWhen('extraColor', 'extra', 'none');
+    material.hideWhen('extraDensity', 'extra', 'none');
+  }
+  material.addSettingSeparator({ name: L('Section.body') });
   if (jelly) {
     material.addSettingBoolean({
       id: 'glow',
@@ -367,6 +390,7 @@ export function createResinMaterial(DiceMaterial, type) {
       defaultValue: JELLY_DEFAULTS.color2,
     });
   }
+  if (jelly) material.showWhen('color2', 'glow', true);
   const roughness = (jelly ? JELLY_DEFAULTS : RESIN_DEFAULTS).roughness;
   material.addSettingRange({
     id: 'roughness',

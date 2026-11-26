@@ -83,14 +83,46 @@
   border: 1px solid #000;
   box-sizing: border-box;
 }
-.dicer-area-editor .dicer-area-handle-n { left: calc(50% - 7px); top: -8px; cursor: ns-resize; }
-.dicer-area-editor .dicer-area-handle-s { left: calc(50% - 7px); bottom: -8px; cursor: ns-resize; }
-.dicer-area-editor .dicer-area-handle-e { top: calc(50% - 7px); right: -8px; cursor: ew-resize; }
-.dicer-area-editor .dicer-area-handle-w { top: calc(50% - 7px); left: -8px; cursor: ew-resize; }
-.dicer-area-editor .dicer-area-handle-ne { top: -8px; right: -8px; cursor: nesw-resize; }
-.dicer-area-editor .dicer-area-handle-sw { bottom: -8px; left: -8px; cursor: nesw-resize; }
-.dicer-area-editor .dicer-area-handle-nw { top: -8px; left: -8px; cursor: nwse-resize; }
-.dicer-area-editor .dicer-area-handle-se { bottom: -8px; right: -8px; cursor: nwse-resize; }
+.dicer-area-editor .dicer-area-handle-n {
+  left: calc(50% - 7px);
+  top: -8px;
+  cursor: ns-resize;
+}
+.dicer-area-editor .dicer-area-handle-s {
+  left: calc(50% - 7px);
+  bottom: -8px;
+  cursor: ns-resize;
+}
+.dicer-area-editor .dicer-area-handle-e {
+  top: calc(50% - 7px);
+  right: -8px;
+  cursor: ew-resize;
+}
+.dicer-area-editor .dicer-area-handle-w {
+  top: calc(50% - 7px);
+  left: -8px;
+  cursor: ew-resize;
+}
+.dicer-area-editor .dicer-area-handle-ne {
+  top: -8px;
+  right: -8px;
+  cursor: nesw-resize;
+}
+.dicer-area-editor .dicer-area-handle-sw {
+  bottom: -8px;
+  left: -8px;
+  cursor: nesw-resize;
+}
+.dicer-area-editor .dicer-area-handle-nw {
+  top: -8px;
+  left: -8px;
+  cursor: nwse-resize;
+}
+.dicer-area-editor .dicer-area-handle-se {
+  bottom: -8px;
+  right: -8px;
+  cursor: nwse-resize;
+}
 .dicer-area-editor .dicer-area-panel {
   position: absolute;
   left: 50%;
@@ -128,7 +160,14 @@
 /* Editor windows (themes, appearance, trigger rules, damage map). Everything is scoped under */
 /* app's root class and built on Foundry's own variables, so dark and light themes both work.  */
 /* ------------------------------------------------------------------------------------------- */
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) {
+:is(
+  .dicer-theme-browser,
+  .dicer-trigger-editor,
+  .dicer-damage-map-editor,
+  .dicer-appearance-editor,
+  .dicer-benchmark,
+  .dicer-tt-editor-app
+) {
   --dicer-accent: var(--color-warm-1, #ee9b3a);
   --dicer-line: color-mix(in srgb, currentColor 14%, transparent);
   --dicer-line-strong: color-mix(in srgb, currentColor 28%, transparent);
@@ -141,17 +180,46 @@
   --dicer-radius: 6px;
   --dicer-head-bg: #17151c;
 }
-body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app),
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app).theme-light {
+body.theme-light
+  :is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  ),
+:is(
+  .dicer-theme-browser,
+  .dicer-trigger-editor,
+  .dicer-damage-map-editor,
+  .dicer-appearance-editor,
+  .dicer-benchmark,
+  .dicer-tt-editor-app
+).theme-light {
   --dicer-head-bg: #ece6dc;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .window-content {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .window-content {
   padding: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
-:is(.dicer-theme-browser-body, .dicer-trigger-body, .dicer-damage-map-body, .dicer-ae-body, .dicer-benchmark-body) {
+:is(
+  .dicer-theme-browser-body,
+  .dicer-trigger-body,
+  .dicer-damage-map-body,
+  .dicer-ae-body,
+  .dicer-benchmark-body
+) {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -161,7 +229,15 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
 }
 
 /* shared pieces */
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) button {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  button {
   flex: 0 0 auto;
   width: auto;
   height: var(--dicer-control-h);
@@ -170,12 +246,28 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   font-size: var(--font-size-13, 13px);
   white-space: nowrap;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) button.dicer-icon {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  button.dicer-icon {
   width: var(--dicer-control-h);
   flex: 0 0 var(--dicer-control-h);
   padding: 0;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) button.dicer-ghost {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  button.dicer-ghost {
   --button-background-color: transparent;
   --button-border-color: transparent;
   --button-text-color: var(--color-text-secondary);
@@ -183,42 +275,106 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   --button-hover-border-color: var(--dicer-line-strong);
   --button-hover-text-color: var(--color-text-emphatic);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) button.dicer-danger:hover:not(:disabled) {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  button.dicer-danger:hover:not(:disabled) {
   --button-hover-background-color: var(--color-level-error, #ce0707);
   --button-hover-border-color: var(--color-level-error, #ce0707);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) :is(select, input[type='text'], input[type='number']) {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  :is(select, input[type='text'], input[type='number']) {
   height: var(--dicer-control-h);
   width: 100%;
   min-width: 0;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-hint {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-hint {
   margin: 0;
   font-size: var(--font-size-12, 12px);
   line-height: 1.4;
   color: var(--dicer-muted);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-muted {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-muted {
   color: var(--dicer-muted);
   font-size: var(--font-size-12, 12px);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-empty {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-empty {
   margin: 12px;
   color: var(--dicer-muted);
   font-style: italic;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-toolbar {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-toolbar {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-toolbar-actions {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-toolbar-actions {
   display: flex;
   gap: 6px;
   margin-left: auto;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-segmented {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-segmented {
   display: inline-flex;
   gap: 2px;
   padding: 2px;
@@ -226,7 +382,16 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   border-radius: calc(var(--dicer-radius) + 2px);
   background: var(--dicer-surface);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-segmented button {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-segmented
+  button {
   --button-background-color: transparent;
   --button-border-color: transparent;
   --button-text-color: var(--color-text-secondary);
@@ -238,7 +403,16 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   border-radius: var(--dicer-radius);
   gap: 6px;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-segmented button.active {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-segmented
+  button.active {
   --button-background-color: var(--dicer-selected);
   --button-hover-background-color: var(--dicer-selected);
   --button-text-color: var(--color-text-emphatic);
@@ -249,7 +423,15 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   outline: none; /* Foundry outlines an active button; the fill marks it here */
   font-weight: 600;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-count {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-count {
   font-size: var(--font-size-11, 11px);
   font-weight: normal;
   color: var(--dicer-muted);
@@ -284,34 +466,84 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--dicer-accent) 40%, transparent);
   outline: none;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-field {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-field {
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
   margin: 0;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-field > span:first-child {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-field
+  > span:first-child {
   font-size: var(--font-size-12, 12px);
   color: var(--dicer-label);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-footer {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   padding-top: 10px;
   border-top: 1px solid var(--dicer-line);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-footer button {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-footer
+  button {
   min-width: 120px;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-footer:empty {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-footer:empty {
   display: none;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-badge {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-badge {
   display: inline-block;
   padding: 1px 7px;
   border-radius: 999px;
@@ -323,15 +555,39 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   color: var(--dicer-muted);
   white-space: nowrap;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-badge-user {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-badge-user {
   border-color: color-mix(in srgb, var(--dicer-accent) 45%, transparent);
   color: var(--dicer-accent);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-badge-world {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-badge-world {
   border-color: color-mix(in srgb, var(--color-level-info, #59a1f6) 45%, transparent);
   color: var(--color-level-info, #59a1f6);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-chip {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-chip {
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -343,16 +599,41 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   background: var(--dicer-surface-strong);
   font-size: var(--font-size-12, 12px);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-chip > span {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-chip
+  > span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-chip.is-default {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-chip.is-default {
   padding-right: 8px;
   background: var(--dicer-selected);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) button.dicer-chip-x {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  button.dicer-chip-x {
   --button-background-color: transparent;
   --button-border-color: transparent;
   --button-hover-background-color: var(--dicer-surface-strong);
@@ -365,7 +646,15 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   font-size: 10px;
   color: var(--dicer-muted);
 }
-:is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-map-editor, .dicer-appearance-editor, .dicer-benchmark, .dicer-tt-editor-app) .dicer-sr {
+:is(
+    .dicer-theme-browser,
+    .dicer-trigger-editor,
+    .dicer-damage-map-editor,
+    .dicer-appearance-editor,
+    .dicer-benchmark,
+    .dicer-tt-editor-app
+  )
+  .dicer-sr {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -431,7 +720,11 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   place-items: center;
   /* a neutral dark studio; the theme colour is a faint glow at most */
   background:
-    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--dicer-swatch, #888) 16%, transparent) 0%, transparent 62%),
+    radial-gradient(
+      circle at 50% 42%,
+      color-mix(in srgb, var(--dicer-swatch, #888) 16%, transparent) 0%,
+      transparent 62%
+    ),
     radial-gradient(circle at 50% 35%, #3a3940 0%, #1f1e24 58%, #141317 100%);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
@@ -909,7 +1202,8 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
 
 /* Damage type map ---------------------------------------------------------------------------- */
 .dicer-damage-map-editor {
-  --dicer-dm-cols: minmax(130px, 1fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(170px, 1.3fr) 60px 28px;
+  --dicer-dm-cols: minmax(130px, 1fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(170px, 1.3fr)
+    60px 28px;
 }
 .dicer-damage-map-editor .dicer-dm-scroll {
   flex: 1;
@@ -971,7 +1265,9 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.25),
+    0 0 0 1px rgba(0, 0, 0, 0.35);
 }
 .dicer-damage-map-editor .dicer-dm-swatch.is-empty {
   box-shadow: none;
@@ -1295,13 +1591,16 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
 }
 .dicer-appearance-editor .dicer-ae-swatch-opaque {
   background:
-    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.35) 0 8%, transparent 30%),
-    var(--c);
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.35) 0 8%, transparent 30%), var(--c);
 }
 .dicer-appearance-editor .dicer-ae-swatch-resin {
   background:
     radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.9) 0 7%, transparent 26%),
-    radial-gradient(circle at 60% 70%, color-mix(in srgb, var(--c2) 70%, transparent) 0 30%, transparent 62%),
+    radial-gradient(
+      circle at 60% 70%,
+      color-mix(in srgb, var(--c2) 70%, transparent) 0 30%,
+      transparent 62%
+    ),
     color-mix(in srgb, var(--c) 55%, transparent);
   box-shadow:
     inset 0 0 0 1.5px color-mix(in srgb, var(--c) 70%, white 30%),
@@ -1319,23 +1618,51 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
 .dicer-appearance-editor .dicer-ae-swatch-marble {
   background:
     linear-gradient(118deg, transparent 38%, var(--c2) 42% 47%, transparent 51%),
-    linear-gradient(62deg, transparent 58%, color-mix(in srgb, var(--c2) 70%, transparent) 61% 64%, transparent 67%),
+    linear-gradient(
+      62deg,
+      transparent 58%,
+      color-mix(in srgb, var(--c2) 70%, transparent) 61% 64%,
+      transparent 67%
+    ),
     var(--c);
 }
 .dicer-appearance-editor .dicer-ae-swatch-pearl {
   background:
     radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.95) 0 9%, transparent 42%),
-    conic-gradient(from 210deg, var(--c), var(--c2), color-mix(in srgb, var(--c) 40%, white 60%), var(--c));
+    conic-gradient(
+      from 210deg,
+      var(--c),
+      var(--c2),
+      color-mix(in srgb, var(--c) 40%, white 60%),
+      var(--c)
+    );
 }
 .dicer-appearance-editor .dicer-ae-swatch-iridescent {
   background:
     radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.6) 0 8%, transparent 30%),
-    conic-gradient(from 20deg, var(--c), var(--c2), color-mix(in srgb, var(--c) 50%, var(--c2) 50%), var(--c));
+    conic-gradient(
+      from 20deg,
+      var(--c),
+      var(--c2),
+      color-mix(in srgb, var(--c) 50%, var(--c2) 50%),
+      var(--c)
+    );
 }
 .dicer-appearance-editor .dicer-ae-swatch-gem {
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0 22%, transparent 22% 50%, rgba(0, 0, 0, 0.3) 50% 74%, transparent 74%),
-    linear-gradient(45deg, var(--c2) 0%, var(--c) 55%, color-mix(in srgb, var(--c) 55%, white 45%) 100%);
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.55) 0 22%,
+      transparent 22% 50%,
+      rgba(0, 0, 0, 0.3) 50% 74%,
+      transparent 74%
+    ),
+    linear-gradient(
+      45deg,
+      var(--c2) 0%,
+      var(--c) 55%,
+      color-mix(in srgb, var(--c) 55%, white 45%) 100%
+    );
 }
 .dicer-appearance-editor .dicer-ae-swatch-wood {
   background: repeating-radial-gradient(circle at 70% 60%, var(--c) 0 2px, var(--c2) 2px 3.5px);
@@ -1351,8 +1678,7 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
 }
 .dicer-appearance-editor .dicer-ae-fill-enamel {
   background:
-    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.85) 0 8%, transparent 30%),
-    var(--c);
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.85) 0 8%, transparent 30%), var(--c);
 }
 .dicer-appearance-editor .dicer-ae-fill-outline {
   background: transparent;
@@ -2093,7 +2419,12 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   padding: 0 6px;
   border-color: color-mix(in srgb, var(--dicer-ct-accent) 80%, #000);
   border-radius: 13px;
-  background: linear-gradient(180deg, var(--dicer-ct-accent-2), var(--dicer-ct-accent) 60%, color-mix(in srgb, var(--dicer-ct-accent) 80%, #000));
+  background: linear-gradient(
+    180deg,
+    var(--dicer-ct-accent-2),
+    var(--dicer-ct-accent) 60%,
+    color-mix(in srgb, var(--dicer-ct-accent) 80%, #000)
+  );
   color: #fff;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -2104,7 +2435,12 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   touch-action: none;
 }
 .dicer-chat-tray-bar .dicer-chat-tray-roll:hover:not(:disabled) {
-  background: linear-gradient(180deg, #ffc08a, var(--dicer-ct-accent-2) 50%, var(--dicer-ct-accent));
+  background: linear-gradient(
+    180deg,
+    #ffc08a,
+    var(--dicer-ct-accent-2) 50%,
+    var(--dicer-ct-accent)
+  );
   box-shadow:
     0 0 12px color-mix(in srgb, var(--dicer-ct-accent) 70%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -2341,15 +2677,25 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   height: auto;
   padding: 4px 2px 3px;
   border-radius: 7px;
-  background: radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.15) 70%);
+  background: radial-gradient(
+    circle at 50% 38%,
+    rgba(255, 255, 255, 0.08),
+    rgba(0, 0, 0, 0.15) 70%
+  );
 }
 .dicer-chat-tray .dicer-chat-tray-bag-tile:hover {
   border-color: rgba(255, 255, 255, 0.35);
 }
 .dicer-chat-tray .dicer-chat-tray-bag-tile[aria-pressed='true'] {
   border-color: var(--dicer-ct-accent);
-  background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--dicer-ct-accent) 30%, transparent), rgba(0, 0, 0, 0.15) 75%);
-  box-shadow: 0 0 0 1px var(--dicer-ct-accent), 0 0 10px color-mix(in srgb, var(--dicer-ct-accent) 45%, transparent);
+  background: radial-gradient(
+    circle at 50% 38%,
+    color-mix(in srgb, var(--dicer-ct-accent) 30%, transparent),
+    rgba(0, 0, 0, 0.15) 75%
+  );
+  box-shadow:
+    0 0 0 1px var(--dicer-ct-accent),
+    0 0 10px color-mix(in srgb, var(--dicer-ct-accent) 45%, transparent);
 }
 .dicer-chat-tray-bag-thumb {
   display: grid;
@@ -2655,11 +3001,21 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
      rim texture, rim colour (under the rim). Textures are grey noise (assets/trays/tex) laid over
      the colour with overlay, so they take any colour. */
   /* each of these is one layer: a comma inside would shift the blend modes */
-  --tt-floor-light: radial-gradient(ellipse 80% 75% at 50% 42%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 48%, rgba(0, 0, 0, 0.42));
+  --tt-floor-light: radial-gradient(
+    ellipse 80% 75% at 50% 42%,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0) 48%,
+    rgba(0, 0, 0, 0.42)
+  );
   --tt-floor-tex: none;
   --tt-floor-size: auto;
   --tt-floor-blend: overlay;
-  --tt-rim-light: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.03) 38%, rgba(0, 0, 0, 0.38));
+  --tt-rim-light: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.26),
+    rgba(255, 255, 255, 0.03) 38%,
+    rgba(0, 0, 0, 0.38)
+  );
   --tt-rim-deco: none;
   --tt-rim-step: max(var(--dicer-tt-rim-width), 12px);
   --tt-rim-tex: none;
@@ -2671,7 +3027,8 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   border-radius: var(--dicer-tt-radius);
   background:
     var(--tt-floor-light) padding-box,
-    linear-gradient(var(--dicer-tt-veil, transparent), var(--dicer-tt-veil, transparent)) padding-box,
+    linear-gradient(var(--dicer-tt-veil, transparent), var(--dicer-tt-veil, transparent))
+      padding-box,
     var(--tt-floor-tex) center / var(--tt-floor-size) padding-box,
     linear-gradient(var(--dicer-tt-color), var(--dicer-tt-color)) padding-box,
     var(--tt-rim-light) border-box,
@@ -2679,16 +3036,26 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
     var(--tt-rim-deco) 0 0 / var(--tt-rim-step) calc(4 * var(--tt-rim-step)) space border-box,
     var(--tt-rim-tex) border-box,
     linear-gradient(var(--dicer-tt-rim), var(--dicer-tt-rim)) border-box;
-  background-blend-mode: normal, normal, var(--tt-floor-blend), normal, normal, normal, normal, overlay, normal;
+  background-blend-mode:
+    normal, normal, var(--tt-floor-blend), normal, normal, normal, normal, overlay, normal;
   /* outside: a hairline, the contact shadow and a soft one on the table (lit from above, as the
      dice). Inside: the floor sits below the walls: the top wall's deep shadow, the side walls'
      softer ones, darker corners, and the bottom wall catching a little light. */
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.6), 0 2px 2px rgba(0, 0, 0, 0.65), 0 10px 16px rgba(0, 0, 0, 0.55), 0 26px 50px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.75), inset 0 4px 4px rgba(0, 0, 0, 0.6), inset 0 30px 38px -8px rgba(0, 0, 0, 0.8),
-    inset 20px 0 26px -14px rgba(0, 0, 0, 0.6), inset -20px 0 26px -14px rgba(0, 0, 0, 0.6),
-    inset 0 0 110px rgba(0, 0, 0, 0.5), inset 0 -14px 16px -12px rgba(255, 255, 255, 0.1);
-  transition: opacity 0.4s ease, transform 0.4s ease; /* the dice fade (DiceBox FADE_MS) */
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 2px 2px rgba(0, 0, 0, 0.65),
+    0 10px 16px rgba(0, 0, 0, 0.55),
+    0 26px 50px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.75),
+    inset 0 4px 4px rgba(0, 0, 0, 0.6),
+    inset 0 30px 38px -8px rgba(0, 0, 0, 0.8),
+    inset 20px 0 26px -14px rgba(0, 0, 0, 0.6),
+    inset -20px 0 26px -14px rgba(0, 0, 0, 0.6),
+    inset 0 0 110px rgba(0, 0, 0, 0.5),
+    inset 0 -14px 16px -12px rgba(255, 255, 255, 0.1);
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease; /* the dice fade (DiceBox FADE_MS) */
 }
 /* the rim's bevel: a lit outer edge and a dark inner lip where it drops to the floor */
 .dicer-tt::before {
@@ -2697,7 +3064,12 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   inset: calc(-1 * var(--dicer-tt-rim-width));
   pointer-events: none;
   border-radius: var(--dicer-tt-radius);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), inset 1px 0 0 rgba(255, 255, 255, 0.1), inset -1px 0 0 rgba(0, 0, 0, 0.35), inset 0 -2px 0 rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 1px 0 0 rgba(255, 255, 255, 0.1),
+    inset -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35);
 }
 .dicer-tt.dicer-above {
   z-index: 8999;
@@ -2740,7 +3112,13 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
 }
 .dicer-tt[data-surface='metal'] {
   --tt-floor-tex: url('../assets/trays/tex/metal.svg');
-  --tt-floor-light: linear-gradient(160deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 35%, rgba(255, 255, 255, 0.08) 60%, rgba(0, 0, 0, 0.3));
+  --tt-floor-light: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0.08) 60%,
+    rgba(0, 0, 0, 0.3)
+  );
 }
 .dicer-tt[data-surface='image'] {
   --tt-floor-tex: var(--dicer-tt-image);
@@ -2763,9 +3141,23 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
 }
 .dicer-tt[data-rim='metal'] {
   --tt-rim-tex: url('../assets/trays/tex/metal.svg');
-  --tt-rim-light: linear-gradient(170deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.05) 30%, rgba(0, 0, 0, 0.1) 55%, rgba(255, 255, 255, 0.18) 75%, rgba(0, 0, 0, 0.35));
+  --tt-rim-light: linear-gradient(
+    170deg,
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.05) 30%,
+    rgba(0, 0, 0, 0.1) 55%,
+    rgba(255, 255, 255, 0.18) 75%,
+    rgba(0, 0, 0, 0.35)
+  );
   /* rivets: two layers (top and bottom, then the sides), spaced so the rows sit on the rims */
-  --tt-rim-deco: radial-gradient(circle 5px at 50% 50%, rgba(255, 255, 255, 0.85) 0 1px, color-mix(in srgb, var(--dicer-tt-rim) 60%, #fff) 1.5px, color-mix(in srgb, var(--dicer-tt-rim) 70%, #000) 3px, rgba(0, 0, 0, 0.45) 3.6px, transparent 4.4px);
+  --tt-rim-deco: radial-gradient(
+    circle 5px at 50% 50%,
+    rgba(255, 255, 255, 0.85) 0 1px,
+    color-mix(in srgb, var(--dicer-tt-rim) 60%, #fff) 1.5px,
+    color-mix(in srgb, var(--dicer-tt-rim) 70%, #000) 3px,
+    rgba(0, 0, 0, 0.45) 3.6px,
+    transparent 4.4px
+  );
 }
 /* shapes. Round: the rectangle's own rim and shadows, fully rounded. Hexagon and octagon: the
    box draws nothing; its skin (clipped to the shape) draws the rim, the floor inside it, and a dark
@@ -2806,8 +3198,7 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   inset: calc(-1 * var(--dicer-tt-rim-width));
   isolation: isolate;
   background:
-    var(--tt-rim-light),
-    var(--tt-rim-tex),
+    var(--tt-rim-light), var(--tt-rim-tex),
     linear-gradient(var(--dicer-tt-rim), var(--dicer-tt-rim));
   background-blend-mode: normal, overlay, normal;
 }
@@ -2819,7 +3210,14 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   /* the depth the rectangle gets from inset shadows, as gradients (they follow any outline): the
      top wall's shadow, the bottom wall's light, darker edges */
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.25) 9%, rgba(0, 0, 0, 0) 22%, rgba(0, 0, 0, 0) 86%, rgba(255, 255, 255, 0.08)),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.75),
+      rgba(0, 0, 0, 0.25) 9%,
+      rgba(0, 0, 0, 0) 22%,
+      rgba(0, 0, 0, 0) 86%,
+      rgba(255, 255, 255, 0.08)
+    ),
     radial-gradient(closest-side, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.5)),
     var(--tt-floor-light),
     linear-gradient(var(--dicer-tt-veil, transparent), var(--dicer-tt-veil, transparent)),
@@ -2881,10 +3279,18 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   bottom: calc(-1 * var(--dicer-tt-rim-width));
   width: max(10px, var(--dicer-tt-rim-width));
 }
-.dicer-tt-edge-top { top: calc(-1 * var(--dicer-tt-rim-width)); }
-.dicer-tt-edge-bottom { bottom: calc(-1 * var(--dicer-tt-rim-width)); }
-.dicer-tt-edge-left { left: calc(-1 * var(--dicer-tt-rim-width)); }
-.dicer-tt-edge-right { right: calc(-1 * var(--dicer-tt-rim-width)); }
+.dicer-tt-edge-top {
+  top: calc(-1 * var(--dicer-tt-rim-width));
+}
+.dicer-tt-edge-bottom {
+  bottom: calc(-1 * var(--dicer-tt-rim-width));
+}
+.dicer-tt-edge-left {
+  left: calc(-1 * var(--dicer-tt-rim-width));
+}
+.dicer-tt-edge-right {
+  right: calc(-1 * var(--dicer-tt-rim-width));
+}
 .dicer-tt-grip {
   position: absolute;
   right: calc(-1 * var(--dicer-tt-rim-width) - 4px);
@@ -2894,7 +3300,14 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   z-index: 1;
   pointer-events: auto;
   cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.55) 50% 58%, transparent 58% 68%, rgba(255, 255, 255, 0.55) 68% 76%, transparent 76%);
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    rgba(255, 255, 255, 0.55) 50% 58%,
+    transparent 58% 68%,
+    rgba(255, 255, 255, 0.55) 68% 76%,
+    transparent 76%
+  );
 }
 /* the pop-out button on the rim's top-right corner: faint until the tray is hovered */
 .dicer-tt-popout {
@@ -2949,7 +3362,10 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   z-index: auto;
   width: 100%;
   height: 100%;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 8px 20px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 8px 20px rgba(0, 0, 0, 0.45);
   transition: none;
 }
 .dicer-tt-editor-app .dicer-tt-target {
@@ -3388,8 +3804,8 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
 .dicer-appearance-editor .dicer-ae-contrast-note > i {
   margin-top: 2px;
 }
-.dicer-appearance-editor .dicer-ae-contrast-note[data-state="close"],
-.dicer-appearance-editor .dicer-ae-contrast-note[data-state="adjusted"] {
+.dicer-appearance-editor .dicer-ae-contrast-note[data-state='close'],
+.dicer-appearance-editor .dicer-ae-contrast-note[data-state='adjusted'] {
   color: var(--color-level-warning, #ee9b3a);
   opacity: 1;
 }
@@ -3410,4 +3826,64 @@ body.theme-light :is(.dicer-theme-browser, .dicer-trigger-editor, .dicer-damage-
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.application.dialog:has(.dicer-ms) .window-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.application.dialog:has(.dicer-ms) form.dialog-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.application.dialog:has(.dicer-ms) form.dialog-form > [data-materialsettings] {
+  flex: 1;
+  min-height: 0;
+  order: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.application.dialog:has(.dicer-ms) form.dialog-form > footer.form-footer {
+  flex: none;
+  order: 2;
+}
+.application.dialog:has(.dicer-ms) [data-materialsettings] p.hint {
+  margin: 0 0 0.3rem;
+}
+
+.dicer-ms .dicer-ms-section {
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.15));
+  border-radius: 6px;
+  margin: 0 0 0.6rem;
+  padding: 0.35rem 0.6rem 0.5rem;
+}
+.dicer-ms .dicer-ms-section > legend {
+  color: var(--color-warm-1, #e2b04a);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0 0.4rem;
+  text-transform: uppercase;
+}
+.dicer-ms .dicer-ms-row .form-group {
+  margin: 0.2rem 0;
+}
+.dicer-ms .dicer-ms-row .form-group > label {
+  flex: 0 0 38%;
+}
+.dicer-ms .dicer-ms-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dicer-ms .dicer-ms-row .form-group {
+  margin: 0;
+  min-height: 0;
+}
+.dicer-ms .dicer-ms-section > p.hint {
+  margin: 0 0 0.2rem;
 }

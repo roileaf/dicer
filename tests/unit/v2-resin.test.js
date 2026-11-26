@@ -67,24 +67,35 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
     expect(resin.impactSounds).toBe('dicer.dice-plastic');
     expect(jelly.impactSounds).toBe('dicer.dice-squishy');
     expect(resin.weight).toBe(2);
-    expect(resin.settings.map((s) => s.id)).toEqual([
+    expect(resin.settings.map((s) => s.id).filter(Boolean)).toEqual([
       'inside',
       'insideColor',
       'insideColor2',
       'density',
+      'motion',
       'shape',
       'inclusion',
       'bubble',
       'sand',
-      'motion',
       'extra',
       'extraColor',
       'extraDensity',
       'roughness',
       ...Object.keys(DETAIL_DEFAULTS),
     ]);
-    expect(Object.keys(resin.settings[0].options)).toEqual([...INSIDE_TYPES]);
-    expect(jelly.settings.map((s) => s.id)).toEqual([
+    expect(resin.settings.filter((s) => s.type === 'separator').map((s) => s.name)).toEqual([
+      'DICER.Appearance.Section.inside',
+      'DICER.V2.Material.Suspended',
+      'DICER.Appearance.Section.body',
+      'DICER.Appearance.Section.numbers',
+      'DICER.Appearance.Section.glow',
+      'DICER.Appearance.Edges.Strip',
+    ]);
+    expect(resin.settings.filter((s) => s.type === 'html').length).toBe(2);
+    expect(Object.keys(resin.settings.find((s) => s.id === 'inside').options)).toEqual([
+      ...INSIDE_TYPES,
+    ]);
+    expect(jelly.settings.map((s) => s.id).filter(Boolean)).toEqual([
       'glow',
       'color2',
       'roughness',

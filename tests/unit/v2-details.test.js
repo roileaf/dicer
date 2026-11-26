@@ -22,6 +22,7 @@ import {
   patchResinShader,
   resinGlsl,
 } from '../../src/v2/materials/resin.js';
+import { conditionCss, dicerMaterialClass } from '../../src/v2/materials/settings-window.js';
 import { dsnAppearance, dsnLook } from '../../src/v2/themes/dsn-look.js';
 import {
   FONTS,
@@ -321,5 +322,98 @@ describe('v2 d20 icons as DsN dice systems', () => {
     expect(jelly.global.system).toBe('rounded');
     expect({ ...jelly.d20, system: 'rounded', font: jelly.global.font }).toEqual(jelly.global);
     expect('d20' in dsnAppearance(theme('gold-polished'))).toBe(false);
+  });
+});
+
+describe('v2 material settings window: Dicer`s own layout inside DsN`s dialog', () => {
+  const resin = () => createResinMaterial(DiceMaterial, 'resin');
+  const content = (material) =>
+    material._buildSettingsContent('d20', {}, 'materialSettings', 'data-materialSettings');
+
+  it('extends DsN`s material class once, and every Dicer material uses it', () => {
+    const cls = dicerMaterialClass(DiceMaterial);
+    expect(dicerMaterialClass(DiceMaterial)).toBe(cls);
+    expect(Object.getPrototypeOf(cls)).toBe(DiceMaterial);
+    expect(resin()).toBeInstanceOf(cls);
+    expect(createBodyMaterial(DiceMaterial, 'wood')).toBeInstanceOf(cls);
+    expect(createResinMaterial(DiceMaterial, 'jelly')).toBeInstanceOf(DiceMaterial);
+  });
+
+  it('keeps DsN`s wrapper and a field per setting, so DsN reads the values back', () => {
+    const material = resin();
+    const { content: html, data } = content(material);
+    expect(html.startsWith('<div data-materialSettings="dicer.body-resin" class="dicer-ms">')).toBe(
+      true,
+    );
+    for (const s of material.settings.filter((x) => x.id)) {
+      expect(html, s.id).toContain(`name="appearance[d20][materialSettings][${s.id}]"`);
+      expect(html, s.id).toContain(`<div class="dicer-ms-row" data-setting="${s.id}">`);
+      expect(data[s.id].name).toBe(`appearance[d20][materialSettings][${s.id}]`);
+    }
+    expect(Object.keys(data).length).toBe(material.settings.filter((x) => x.id).length);
+  });
+
+  it('puts the settings in a titled section per separator, hints included', () => {
+    const html = content(resin()).content;
+    expect(html.match(/<fieldset class="dicer-ms-section">/g).length).toBe(6);
+    expect(html.match(/<\/fieldset>/g).length).toBe(6);
+    expect(html).toContain('<legend>DICER.Appearance.Section.inside</legend>');
+    expect(html).toContain('<p class="hint">DICER.Appearance.Glow.Hint</p>');
+    expect(html.indexOf('data-setting="shape"')).toBeLessThan(
+      html.indexOf('DICER.V2.Material.Suspended'),
+    );
+  });
+
+  it('shows a control only with the choice it belongs to, by CSS alone', () => {
+    const css = conditionCss('dicer.body-resin', [
+      { row: 'shape', parent: 'inside', values: ['shape'], show: true },
+      { row: 'stripColor', parent: 'strip', values: ['body'], show: false },
+      { row: 'color2', parent: 'glow', values: [true], show: true },
+    ]);
+    const root = '[data-materialsettings="dicer.body-resin"]';
+    expect(css).toContain(`${root} .dicer-ms-row[data-setting="shape"]{display:none}`);
+    expect(css).toContain(
+      `${root}:has(select[name$="[inside]"] option[value="shape"]:checked) .dicer-ms-row[data-setting="shape"]{display:block}`,
+    );
+    expect(css).toContain(
+      `${root}:has(select[name$="[strip]"] option[value="body"]:checked) .dicer-ms-row[data-setting="stripColor"]{display:none}`,
+    );
+    expect(css).toContain(
+      `${root}:has(input[name$="[glow]"]:checked) .dicer-ms-row[data-setting="color2"]{display:block}`,
+    );
+  });
+
+  it('declares what depends on what, for settings the material has', () => {
+    for (const material of [
+      resin(),
+      createResinMaterial(DiceMaterial, 'jelly'),
+      createBodyMaterial(DiceMaterial, 'metal'),
+    ]) {
+      const ids = material.settings.map((s) => s.id);
+      for (const c of material._conditions) {
+        expect(ids, `${material.id} ${c.row}`).toContain(c.row);
+        expect(ids, `${material.id} ${c.parent}`).toContain(c.parent);
+      }
+    }
+    const rows = (m) =>
+      m._conditions.map((c) => `${c.show ? '+' : '-'}${c.row}@${c.parent}=${c.values}`);
+    expect(rows(resin())).toEqual([
+      '+shape@inside=shape',
+      '+inclusion@inside=botanical',
+      '+bubble@inside=liquid',
+      '+sand@inside=liquid',
+      '-insideColor@inside=none',
+      '-insideColor2@inside=none',
+      '-density@inside=none',
+      '-motion@inside=none',
+      '-extraColor@extra=none',
+      '-extraDensity@extra=none',
+      '+inkGlow@ink=glow',
+      '-stripColor@strip=body',
+      '-stripStrength@strip=body',
+      '-stripWidth@strip=body',
+    ]);
+    expect(rows(createResinMaterial(DiceMaterial, 'jelly'))[0]).toBe('+color2@glow=true');
+    expect(content(resin()).content).toContain('<style>[data-materialsettings="dicer.body-resin"]');
   });
 });

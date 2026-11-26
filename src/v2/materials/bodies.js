@@ -31,6 +31,7 @@ import {
   DETAIL_ROUGHNESS,
   setFaceUniforms,
 } from './details.js';
+import { dicerMaterialClass } from './settings-window.js';
 
 export const LOCAL_SCALE = 60;
 const radii = new WeakMap();
@@ -242,7 +243,8 @@ export function createBodyMaterial(DiceMaterial, type) {
   const base = { ...(spec.base ?? {}), ...(patch?.params ?? {}) };
   base.roughness = roughnessDefault(type) / 100;
 
-  const material = new DiceMaterial(bodyMaterialId(type), `DICER.V2.Material.${type}`)
+  const Material = dicerMaterialClass(DiceMaterial);
+  const material = new Material(bodyMaterialId(type), `DICER.V2.Material.${type}`)
     .setBase('physical', base)
     .setFallback(spec.fallback)
     .setImpactSounds(diceSoundSetId(soundMaterialOf({ body: { type } })))
@@ -257,6 +259,7 @@ export function createBodyMaterial(DiceMaterial, type) {
   addFxUniforms(material);
   addDetailUniforms(material);
 
+  material.addSettingSeparator({ name: L('Section.body') });
   if (presets.length)
     material.addSettingSelect({
       id: 'preset',

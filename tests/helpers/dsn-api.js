@@ -9,6 +9,20 @@ class Settings {
     if (!id || !name) throw new Error(`invalid ${type} setting`);
     this._settings.push({ type, id, name, defaultValue, ...rest });
   }
+  addSettingSeparator({ name = '' } = {}) {
+    this._settings.push({ type: 'separator', id: null, name });
+  }
+  addSettingHTML({ name }) {
+    this._settings.push({ type: 'html', id: null, name });
+  }
+  _buildSettingsLine(setting, diceType, value, inputGroup) {
+    if (setting.type === 'html') return { content: setting.name, data: {} };
+    const name = `appearance[${diceType}][${inputGroup}][${setting.id}]`;
+    return { content: `<input name="${name}">`, data: { value, name } };
+  }
+  _buildSettingsContent() {
+    return { content: 'base', data: {} };
+  }
   addSettingBoolean(s) {
     this._add('boolean', s);
   }
