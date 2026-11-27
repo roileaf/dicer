@@ -13,7 +13,7 @@ import { createVoices, registerVoiceSettings } from './sounds/voices.js';
 import { BUILTIN_THEMES } from '../themes/themes.js';
 import { openThemeBrowser, registerThemeBrowser } from './themes/browser.js';
 import { dsnAppearance } from './themes/dsn-look.js';
-import { preloadFonts, registerFonts } from './themes/fonts.js';
+import { defineFonts, preloadFonts, registerFonts } from './themes/fonts.js';
 import { registerIconSystems } from './themes/icons.js';
 
 export const DSN_ID = 'dice-so-nice';
@@ -60,6 +60,7 @@ registerLaunch();
 const reactions = registerReactions(Hooks, createReactions({ voices }));
 
 Hooks.once('init', () => {
+  defineFonts();
   preloadFonts(registerFonts());
   registerThemeBrowser();
   registerPetWindow();

@@ -14,16 +14,30 @@ export const ICONS = Object.freeze({ family: 'Dicer Icons', file: 'DicerIcons.ot
 
 export const fontFamilyOf = (id) => FONTS[id]?.family ?? 'auto';
 
+const defaultRoute = (path) => globalThis.foundry?.utils?.getRoute?.(path) ?? `/${path}`;
+const fontUrl = (file, route) =>
+  route(`modules/${MODULE}/assets/fonts/${encodeURIComponent(file)}`);
+
+export function defineFonts({ config = globalThis.CONFIG, route = defaultRoute } = {}) {
+  const definitions = config?.fontDefinitions;
+  if (!definitions) return [];
+  const families = [];
+  for (const { family, file } of Object.values(FONTS)) {
+    definitions[family] ??= { editor: true, fonts: [{ urls: [fontUrl(file, route)] }] };
+    families.push(family);
+  }
+  return families;
+}
+
 export function registerFonts({
   fonts = globalThis.document?.fonts,
   FontFace = globalThis.FontFace,
-  route = (path) => globalThis.foundry?.utils?.getRoute?.(path) ?? `/${path}`,
+  route = defaultRoute,
 } = {}) {
   if (!fonts || !FontFace) return [];
   const added = [];
   for (const { family, file } of [...Object.values(FONTS), ICONS]) {
-    const url = route(`modules/${MODULE}/assets/fonts/${encodeURIComponent(file)}`);
-    const face = new FontFace(family, `url("${url}")`);
+    const face = new FontFace(family, `url("${fontUrl(file, route)}")`);
     fonts.add(face);
     added.push(face);
   }

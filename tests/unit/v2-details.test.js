@@ -28,6 +28,7 @@ import {
   FONTS,
   fontFamilyOf,
   ICONS,
+  defineFonts,
   preloadFonts,
   registerFonts,
 } from '../../src/v2/themes/fonts.js';
@@ -250,6 +251,19 @@ describe('v2 themes carry their numbers, edges and fonts to DsN', () => {
     expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
     expect(registerFonts({ fonts: null })).toEqual([]);
+  });
+
+  it('lists the theme fonts in Foundry`s font settings, so DsN`s font menu offers them', () => {
+    const config = { fontDefinitions: { 'Dicer Serif': { editor: false, fonts: [] } } };
+    const families = defineFonts({ config, route: (p) => `/base/${p}` });
+    expect(families).toEqual(Object.values(FONTS).map((f) => f.family));
+    expect(config.fontDefinitions['Dicer Serif']).toEqual({ editor: false, fonts: [] });
+    expect(config.fontDefinitions['Dicer Scifi']).toEqual({
+      editor: true,
+      fonts: [{ urls: ['/base/modules/dicer/assets/fonts/Orbitron%5Bwght%5D.ttf'] }],
+    });
+    expect(config.fontDefinitions[ICONS.family]).toBeUndefined();
+    expect(defineFonts({ config: {} })).toEqual([]);
   });
 
   it('carries the ink, the number glow and the edge strip of a theme', () => {
