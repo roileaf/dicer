@@ -16,7 +16,7 @@ import {
   VEIN_SCALE,
 } from '../../render/shaders/bodies.js';
 import { NOISE_GLSL } from '../../render/shaders/noise.js';
-import { diceSoundSetId, MODULE_ID } from '../sounds/register.js';
+import { diceSoundSetId, GROUP, MODULE_ID } from '../sounds/register.js';
 import {
   addDetailSettings,
   addDetailUniforms,
@@ -31,7 +31,6 @@ import {
   DETAIL_ROUGHNESS,
   setFaceUniforms,
 } from './details.js';
-import { dicerMaterialClass } from './settings-window.js';
 
 export const LOCAL_SCALE = 60;
 const radii = new WeakMap();
@@ -243,8 +242,7 @@ export function createBodyMaterial(DiceMaterial, type) {
   const base = { ...(spec.base ?? {}), ...(patch?.params ?? {}) };
   base.roughness = roughnessDefault(type) / 100;
 
-  const Material = dicerMaterialClass(DiceMaterial);
-  const material = new Material(bodyMaterialId(type), `DICER.V2.Material.${type}`)
+  const material = new DiceMaterial(bodyMaterialId(type), `DICER.V2.Material.${type}`, GROUP)
     .setBase('physical', base)
     .setFallback(spec.fallback)
     .setImpactSounds(diceSoundSetId(soundMaterialOf({ body: { type } })))
@@ -279,6 +277,7 @@ export function createBodyMaterial(DiceMaterial, type) {
       id: 'color2',
       name: L('Body.SecondColor'),
       defaultValue: color2Default(type),
+      ...(type === 'metal' ? { showIf: { finish: ['patina', 'worn'] } } : {}),
     });
   material.addSettingRange({
     id: 'roughness',
@@ -291,7 +290,6 @@ export function createBodyMaterial(DiceMaterial, type) {
   if (type === 'iridescent')
     material.addSettingBoolean({ id: 'streaks', name: L('Body.LayerLines'), defaultValue: true });
 
-  if (type === 'metal') material.showWhen('color2', 'finish', 'patina', 'worn');
   addDetailSettings(material, L, V);
 
   material.registerProcessMaterialCallback((_diceType, mat, appearance) => {

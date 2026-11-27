@@ -20,6 +20,7 @@ export function materialSettingsOf(a) {
       shape: i.shape,
       inclusion: i.inclusion,
       insideColor: i.colors[0],
+      ...(i.type === 'eye' ? { irisColor: i.colors[0] } : {}),
       insideColor2: i.colors[1],
       density: pct(i.density),
       bubble: !!i.bubble,
@@ -61,6 +62,7 @@ export function dsnLook(a) {
           ? a.body.color2
           : 'none',
     material: bodyMaterialId(a.body.type),
+    ...(a.numbers.depth > 0 ? {} : { labelRelief: false }),
     materialSettings: {
       ...materialSettingsOf(a),
       ...detailSettingsOf(a, readable, stripActive(a)),

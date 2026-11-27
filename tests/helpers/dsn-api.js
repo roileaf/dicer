@@ -9,22 +9,11 @@ class Settings {
     if (!id || !name) throw new Error(`invalid ${type} setting`);
     this._settings.push({ type, id, name, defaultValue, ...rest });
   }
-  addSettingSeparator({ name = '' } = {}) {
-    this._settings.push({ type: 'separator', id: null, name });
+  addSettingSeparator({ name = '', showIf } = {}) {
+    this._settings.push({ type: 'separator', id: null, name, showIf });
   }
-  addSettingHTML({ name }) {
-    this._settings.push({ type: 'html', id: null, name });
-  }
-  _buildSettingsLine(setting, diceType, value, inputGroup) {
-    if (setting.type === 'html') return { content: setting.name, data: {} };
-    const name = `appearance[${diceType}][${inputGroup}][${setting.id}]`;
-    return {
-      content: `<label>${setting.name}</label><input name="${name}">`,
-      data: { value, name },
-    };
-  }
-  _buildSettingsContent() {
-    return { content: 'base', data: {} };
+  addSettingHTML({ name, showIf }) {
+    this._settings.push({ type: 'html', id: null, name, showIf });
   }
   addSettingBoolean(s) {
     this._add('boolean', s);
@@ -47,11 +36,12 @@ class Settings {
 }
 
 export class DiceMaterial extends Settings {
-  constructor(id, name) {
+  constructor(id, name, group = null) {
     super();
     Object.assign(this, {
       id,
       name,
+      group,
       base: null,
       fallback: 'plastic',
       translucent: false,

@@ -1,5 +1,5 @@
 import { DiceMaterial, DiceSFX, DiceSystem, TabletopObject } from 'dice-so-nice/api.js';
-import { registerEffectHooks, registerEffects } from './effects/classes.js';
+import { registerEffects } from './effects/classes.js';
 import { createReactions, registerReactions } from './effects/reactions.js';
 import { registerLighting } from './lighting.js';
 import { registerBodies } from './materials/bodies.js';
@@ -53,7 +53,6 @@ Hooks.once('diceSoNiceReady', (dice3d) => {
 });
 
 registerInsideMotion();
-registerEffectHooks();
 registerQuality();
 const voices = createVoices();
 const pets = registerPets(TabletopObject, Hooks, createPets({ TabletopObject, voices }));

@@ -25,6 +25,7 @@ describe('v2 studio lighting (DsN 5.3)', () => {
     expect(dice3d.addEnvironment).toHaveBeenCalledWith({
       id: 'dicer.studio',
       name: 'DICER.V2.Ambiance.studio',
+      group: 'Dicer',
       src: 'modules/dicer/assets/lighting/dicer-studio.hdr',
     });
   });

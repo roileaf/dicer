@@ -27,8 +27,7 @@ import {
   DETAIL_METALNESS,
   DETAIL_ROUGHNESS,
 } from './details.js';
-import { dicerMaterialClass } from './settings-window.js';
-import { diceSoundSetId } from '../sounds/register.js';
+import { diceSoundSetId, GROUP } from '../sounds/register.js';
 import {
   addFxUniforms,
   after,
@@ -113,6 +112,7 @@ export function lookOf(type, settings = {}) {
     };
   }
   const s = { ...RESIN_DEFAULTS, ...settings };
+  if (s.inside === 'eye' && typeof s.irisColor === 'string') s.insideColor = s.irisColor;
   return normalizeAppearance({
     body: { type: 'resin', roughness: pct(s.roughness, 5) },
     interior: {
@@ -297,8 +297,7 @@ export function createResinMaterial(DiceMaterial, type) {
   const base = jelly
     ? { ...jellyPatch({ body: { type, color2: '#ffffff' } }).params, roughness: 0.2 }
     : { ior: RESIN.ior, roughness: 0.05, clearcoat: 1, clearcoatRoughness: RESIN.coatRoughness };
-  const Material = dicerMaterialClass(DiceMaterial);
-  const material = new Material(bodyMaterialId(type), `DICER.V2.Material.${type}`)
+  const material = new DiceMaterial(bodyMaterialId(type), `DICER.V2.Material.${type}`, GROUP)
     .setBase('physical', base)
     .setFallback('resin')
     .setImpactSounds(diceSoundSetId(soundMaterialOf({ body: { type } })))
@@ -316,15 +315,24 @@ export function createResinMaterial(DiceMaterial, type) {
     material.addSettingSelect(
       select('inside', 'Inside.Type', INSIDE_TYPES, 'InsideType', d.inside),
     );
+    const filled = INSIDE_TYPES.filter((t) => t !== 'none');
     material.addSettingColor({
       id: 'insideColor',
       name: L('Inside.MainColor'),
       defaultValue: d.insideColor,
+      showIf: { inside: filled.filter((t) => t !== 'eye') },
+    });
+    material.addSettingColor({
+      id: 'irisColor',
+      name: L('Inside.IrisColor'),
+      defaultValue: d.insideColor,
+      showIf: { inside: 'eye' },
     });
     material.addSettingColor({
       id: 'insideColor2',
       name: L('Inside.SecondColor'),
       defaultValue: d.insideColor2,
+      showIf: { inside: filled },
     });
     material.addSettingRange({
       id: 'density',
@@ -333,35 +341,41 @@ export function createResinMaterial(DiceMaterial, type) {
       min: 0,
       max: 100,
       step: 5,
+      showIf: { inside: filled },
     });
-    material.addSettingBoolean({ id: 'motion', name: L('Inside.Motion'), defaultValue: d.motion });
-    material.addSettingSelect(select('shape', 'Inside.Shape', INSIDE_SHAPES, 'Shape', d.shape));
-    material.addSettingSelect(
-      select('inclusion', 'Inside.Inclusion', INCLUSIONS, 'Inclusion', d.inclusion),
-    );
+    material.addSettingBoolean({
+      id: 'motion',
+      name: L('Inside.Motion'),
+      defaultValue: d.motion,
+      showIf: { inside: filled },
+    });
+    material.addSettingSelect({
+      ...select('shape', 'Inside.Shape', INSIDE_SHAPES, 'Shape', d.shape),
+      showIf: { inside: 'shape' },
+    });
+    material.addSettingSelect({
+      ...select('inclusion', 'Inside.Inclusion', INCLUSIONS, 'Inclusion', d.inclusion),
+      showIf: { inside: 'botanical' },
+    });
     material.addSettingBoolean({
       id: 'bubble',
       name: L('Inside.Bubble'),
       defaultValue: d.bubble,
+      showIf: { inside: 'liquid' },
     });
     material.addSettingBoolean({
       id: 'sand',
       name: L('Inside.Sand'),
       defaultValue: d.sand,
+      showIf: { inside: 'liquid' },
     });
-    material.labelWhen('insideColor', L('Inside.IrisColor'), 'inside', 'eye');
-    material.showWhen('shape', 'inside', 'shape');
-    material.showWhen('inclusion', 'inside', 'botanical');
-    material.showWhen('bubble', 'inside', 'liquid');
-    material.showWhen('sand', 'inside', 'liquid');
-    for (const row of ['insideColor', 'insideColor2', 'density', 'motion'])
-      material.hideWhen(row, 'inside', 'none');
     material.addSettingSeparator({ name: V('Suspended') });
     material.addSettingSelect(select('extra', 'Inside.Extra', EXTRAS, 'Extra', d.extra));
     material.addSettingColor({
       id: 'extraColor',
       name: L('Inside.ExtraColor'),
       defaultValue: d.extraColor,
+      showIf: { extra: EXTRA_KINDS },
     });
     material.addSettingRange({
       id: 'extraDensity',
@@ -370,11 +384,8 @@ export function createResinMaterial(DiceMaterial, type) {
       min: 0,
       max: 100,
       step: 5,
+      showIf: { extra: EXTRA_KINDS },
     });
-  }
-  if (!jelly) {
-    material.hideWhen('extraColor', 'extra', 'none');
-    material.hideWhen('extraDensity', 'extra', 'none');
   }
   material.addSettingSeparator({ name: L('Section.body') });
   if (jelly) {
@@ -389,9 +400,9 @@ export function createResinMaterial(DiceMaterial, type) {
       id: 'color2',
       name: L('Body.SecondColor'),
       defaultValue: JELLY_DEFAULTS.color2,
+      showIf: { glow: true },
     });
   }
-  if (jelly) material.showWhen('color2', 'glow', true);
   const roughness = (jelly ? JELLY_DEFAULTS : RESIN_DEFAULTS).roughness;
   material.addSettingRange({
     id: 'roughness',

@@ -70,6 +70,7 @@ describe('v2 resin, insides and jelly (DsN 5.1, 5.4)', () => {
     expect(resin.settings.map((s) => s.id).filter(Boolean)).toEqual([
       'inside',
       'insideColor',
+      'irisColor',
       'insideColor2',
       'density',
       'motion',

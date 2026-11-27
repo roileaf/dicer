@@ -1,6 +1,7 @@
 import { SOUND_SPRITES } from './manifest.js';
 
 export const MODULE_ID = 'dicer';
+export const GROUP = 'Dicer';
 
 export const diceSoundSetId = (material) => `${MODULE_ID}.dice-${material}`;
 export const tableSoundSetId = (surface) => `${MODULE_ID}.table-${surface}`;
@@ -21,7 +22,12 @@ export function registerSounds(dice3d, { route, sprites = SOUND_SPRITES } = {}) 
   for (const [surface, sprite] of Object.entries(sprites.table)) {
     const id = tableSoundSetId(surface);
     dice3d.addImpactSounds({ id, table: spriteSounds(sprite, route) });
-    dice3d.addSurface({ id: surfaceId(surface), name: `DICER.V2.Surface.${surface}`, sounds: id });
+    dice3d.addSurface({
+      id: surfaceId(surface),
+      name: `DICER.V2.Surface.${surface}`,
+      group: GROUP,
+      sounds: id,
+    });
     ids.table[surface] = id;
     ids.surfaces[surface] = surfaceId(surface);
   }

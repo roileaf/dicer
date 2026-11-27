@@ -18,15 +18,11 @@ import {
 } from '../../src/v2/materials/details.js';
 import {
   createResinMaterial,
+  INSIDE_TYPES,
   lookOf,
   patchResinShader,
   resinGlsl,
 } from '../../src/v2/materials/resin.js';
-import {
-  conditionCss,
-  dicerMaterialClass,
-  labelCss,
-} from '../../src/v2/materials/settings-window.js';
 import { dsnAppearance, dsnLook } from '../../src/v2/themes/dsn-look.js';
 import {
   FONTS,
@@ -279,6 +275,12 @@ describe('v2 themes carry their numbers, edges and fonts to DsN', () => {
     expect(look.outlineColor).toMatch(/^#[0-9a-f]{6}$/);
     expect(dsnLook(theme('gold-polished').appearance).outlineColor).toBe('none');
   });
+
+  it('draws flat numbers with DsN`s relief switch off, and keeps the relief otherwise', () => {
+    const a = theme('gold-polished').appearance;
+    expect('labelRelief' in dsnLook(a)).toBe(false);
+    expect(dsnLook({ ...a, numbers: { ...a.numbers, depth: 0 } }).labelRelief).toBe(false);
+  });
 });
 
 describe('v2 d20 icons as DsN dice systems', () => {
@@ -352,131 +354,85 @@ describe('v2 d20 icons as DsN dice systems', () => {
   });
 });
 
-describe('v2 material settings window: Dicer`s own layout inside DsN`s dialog', () => {
+describe('v2 material settings: DsN`s own dialog, groups and showIf', () => {
   const resin = () => createResinMaterial(DiceMaterial, 'resin');
-  const content = (material) =>
-    material._buildSettingsContent('d20', {}, 'materialSettings', 'data-materialSettings');
-
-  it('extends DsN`s material class once, and every Dicer material uses it', () => {
-    const cls = dicerMaterialClass(DiceMaterial);
-    expect(dicerMaterialClass(DiceMaterial)).toBe(cls);
-    expect(Object.getPrototypeOf(cls)).toBe(DiceMaterial);
-    expect(resin()).toBeInstanceOf(cls);
-    expect(createBodyMaterial(DiceMaterial, 'wood')).toBeInstanceOf(cls);
-    expect(createResinMaterial(DiceMaterial, 'jelly')).toBeInstanceOf(DiceMaterial);
-  });
-
-  it('keeps DsN`s wrapper and a field per setting, so DsN reads the values back', () => {
-    const material = resin();
-    const { content: html, data } = content(material);
-    expect(html.startsWith('<div data-materialSettings="dicer.body-resin" class="dicer-ms">')).toBe(
-      true,
+  const shown = (material) =>
+    Object.fromEntries(
+      material.settings.filter((s) => s.id && s.showIf).map((s) => [s.id, s.showIf]),
     );
-    for (const s of material.settings.filter((x) => x.id)) {
-      expect(html, s.id).toContain(`name="appearance[d20][materialSettings][${s.id}]"`);
-      expect(html, s.id).toContain(`<div class="dicer-ms-row" data-setting="${s.id}">`);
-      expect(data[s.id].name).toBe(`appearance[d20][materialSettings][${s.id}]`);
+
+  it('lists every Dicer material in the Dicer group, as plain DsN materials', () => {
+    for (const material of [
+      resin(),
+      createResinMaterial(DiceMaterial, 'jelly'),
+      createBodyMaterial(DiceMaterial, 'wood'),
+    ]) {
+      expect(Object.getPrototypeOf(material)).toBe(DiceMaterial.prototype);
+      expect(material.group).toBe('Dicer');
     }
-    expect(Object.keys(data).length).toBe(material.settings.filter((x) => x.id).length);
   });
 
-  it('puts the settings in a titled section per separator, hints included', () => {
-    const html = content(resin()).content;
-    expect(html.match(/<fieldset class="dicer-ms-section">/g).length).toBe(6);
-    expect(html.match(/<\/fieldset>/g).length).toBe(6);
-    expect(html).toContain('<legend>DICER.Appearance.Section.inside</legend>');
-    expect(html).toContain('<p class="hint">DICER.Appearance.Glow.Hint</p>');
-    expect(html.indexOf('data-setting="shape"')).toBeLessThan(
-      html.indexOf('DICER.V2.Material.Suspended'),
-    );
-  });
-
-  it('shows a control only with the choice it belongs to, by CSS alone', () => {
-    const css = conditionCss('dicer.body-resin', [
-      { row: 'shape', parent: 'inside', values: ['shape'], show: true },
-      { row: 'stripColor', parent: 'strip', values: ['body'], show: false },
-      { row: 'color2', parent: 'glow', values: [true], show: true },
-    ]);
-    const root = '[data-materialsettings="dicer.body-resin"]';
-    expect(css).toContain(`${root} .dicer-ms-row[data-setting="shape"]{display:none}`);
-    expect(css).toContain(
-      `${root}:has(select[name$="[inside]"] option[value="shape"]:checked) .dicer-ms-row[data-setting="shape"]{display:block}`,
-    );
-    expect(css).toContain(
-      `${root}:has(select[name$="[strip]"] option[value="body"]:checked) .dicer-ms-row[data-setting="stripColor"]{display:none}`,
-    );
-    expect(css).toContain(
-      `${root}:has(input[name$="[glow]"]:checked) .dicer-ms-row[data-setting="color2"]{display:block}`,
-    );
-  });
-
-  it('shows metal`s second colour only for the aged finishes, as v1 does', () => {
-    const metal = createBodyMaterial(DiceMaterial, 'metal');
-    expect(metal._conditions[0]).toEqual({
-      row: 'color2',
-      parent: 'finish',
-      values: ['patina', 'worn'],
-      show: true,
+  it('shows a control only with the choice it belongs to', () => {
+    const styled = { strip: ['paint', 'metal', 'glow'] };
+    const got = shown(resin());
+    expect(got.insideColor2.inside).toEqual(INSIDE_TYPES.filter((t) => t !== 'none'));
+    expect(got).toEqual({
+      insideColor: { inside: got.insideColor2.inside.filter((t) => t !== 'eye') },
+      irisColor: { inside: 'eye' },
+      insideColor2: { inside: got.insideColor2.inside },
+      density: { inside: got.insideColor2.inside },
+      motion: { inside: got.insideColor2.inside },
+      shape: { inside: 'shape' },
+      inclusion: { inside: 'botanical' },
+      bubble: { inside: 'liquid' },
+      sand: { inside: 'liquid' },
+      extraColor: { extra: ['foil', 'glitter', 'sand', 'bubbles'] },
+      extraDensity: { extra: ['foil', 'glitter', 'sand', 'bubbles'] },
+      inkGlow: { ink: 'glow' },
+      stripColor: styled,
+      stripStrength: styled,
+      stripWidth: styled,
     });
-    expect(
-      createBodyMaterial(DiceMaterial, 'wood')._conditions.some((c) => c.row === 'color2'),
-    ).toBe(false);
+    expect(shown(createResinMaterial(DiceMaterial, 'jelly')).color2).toEqual({ glow: true });
   });
 
-  it('calls the main inside colour the iris colour for the Eye inside', () => {
-    const material = resin();
-    expect(material._labels).toEqual([
-      {
-        row: 'insideColor',
-        label: 'DICER.Appearance.Inside.IrisColor',
-        parent: 'inside',
-        values: ['eye'],
-      },
-    ]);
-    const html = content(material).content;
-    expect(html).toContain(
-      '<label><span class="dicer-ms-main">DICER.Appearance.Inside.MainColor</span><span class="dicer-ms-alt">DICER.Appearance.Inside.IrisColor</span></label>',
-    );
-    const css = labelCss('dicer.body-resin', material._labels);
-    const root = '[data-materialsettings="dicer.body-resin"]';
-    const picked = `${root}:has(select[name$="[inside]"] option[value="eye"]:checked) .dicer-ms-row[data-setting="insideColor"]`;
-    expect(css).toContain(`${root} .dicer-ms-alt{display:none}`);
-    expect(css).toContain(`${picked} .dicer-ms-alt{display:inline}`);
-    expect(css).toContain(`${picked} .dicer-ms-main{display:none}`);
-    expect(labelCss('x', [])).toBe('');
-  });
-
-  it('declares what depends on what, for settings the material has', () => {
+  it('depends only on settings and options the material has', () => {
     for (const material of [
       resin(),
       createResinMaterial(DiceMaterial, 'jelly'),
       createBodyMaterial(DiceMaterial, 'metal'),
     ]) {
-      const ids = material.settings.map((s) => s.id);
-      for (const c of material._conditions) {
-        expect(ids, `${material.id} ${c.row}`).toContain(c.row);
-        expect(ids, `${material.id} ${c.parent}`).toContain(c.parent);
-      }
+      const byId = Object.fromEntries(material.settings.filter((s) => s.id).map((s) => [s.id, s]));
+      for (const [id, showIf] of Object.entries(shown(material)))
+        for (const [parent, wanted] of Object.entries(showIf)) {
+          expect(byId[parent], `${material.id} ${id}`).toBeTruthy();
+          if (byId[parent].type !== 'select') continue;
+          for (const value of [wanted].flat())
+            expect(Object.keys(byId[parent].options), `${material.id} ${id}`).toContain(value);
+        }
     }
-    const rows = (m) =>
-      m._conditions.map((c) => `${c.show ? '+' : '-'}${c.row}@${c.parent}=${c.values}`);
-    expect(rows(resin())).toEqual([
-      '+shape@inside=shape',
-      '+inclusion@inside=botanical',
-      '+bubble@inside=liquid',
-      '+sand@inside=liquid',
-      '-insideColor@inside=none',
-      '-insideColor2@inside=none',
-      '-density@inside=none',
-      '-motion@inside=none',
-      '-extraColor@extra=none',
-      '-extraDensity@extra=none',
-      '+inkGlow@ink=glow',
-      '-stripColor@strip=body',
-      '-stripStrength@strip=body',
-      '-stripWidth@strip=body',
-    ]);
-    expect(rows(createResinMaterial(DiceMaterial, 'jelly'))[0]).toBe('+color2@glow=true');
-    expect(content(resin()).content).toContain('<style>[data-materialsettings="dicer.body-resin"]');
+  });
+
+  it('shows metal`s second colour only for the aged finishes, as v1 does', () => {
+    expect(shown(createBodyMaterial(DiceMaterial, 'metal')).color2).toEqual({
+      finish: ['patina', 'worn'],
+    });
+    expect(shown(createBodyMaterial(DiceMaterial, 'wood')).color2).toBeUndefined();
+  });
+
+  it('gives the Eye inside its own iris colour, which a theme fills', () => {
+    const iris = resin().settings.find((s) => s.id === 'irisColor');
+    expect(iris.name).toBe('DICER.Appearance.Inside.IrisColor');
+    expect(
+      lookOf('resin', { inside: 'eye', insideColor: '#111111', irisColor: '#22aa44' }).interior
+        .colors[0],
+    ).toBe('#22aa44');
+    expect(
+      lookOf('resin', { inside: 'smoke', insideColor: '#111111', irisColor: '#22aa44' }).interior
+        .colors[0],
+    ).toBe('#111111');
+    expect(lookOf('resin', { inside: 'eye', insideColor: '#111111' }).interior.colors[0]).toBe(
+      '#111111',
+    );
   });
 });

@@ -44,6 +44,7 @@ describe('v2 impact sounds (DsN 5.2)', () => {
     expect(dice3d.addSurface).toHaveBeenCalledWith({
       id: surfaceId('felt'),
       name: 'DICER.V2.Surface.felt',
+      group: 'Dicer',
       sounds: tableSoundSetId('felt'),
     });
     for (const id of sets.map((s) => s.id)) expect(id.startsWith('dicer.')).toBe(true);

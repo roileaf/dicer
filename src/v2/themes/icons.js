@@ -1,4 +1,5 @@
 import { ICON_IDS } from '../../look/appearance.js';
+import { GROUP } from '../sounds/register.js';
 import { BUILTIN_THEMES } from '../../themes/themes.js';
 import { FONTS } from './fonts.js';
 
@@ -58,7 +59,7 @@ export function registerIconSystems(
       .join(', ');
     const font = localize(`DICER.Appearance.FontKind.${pack.font}`);
     const name = `${localize('DICER.V2.Icons')}: ${names} (${font})`;
-    const system = new DiceSystem(id, name, 'default', 'Dicer');
+    const system = new DiceSystem(id, name, 'default', GROUP);
     system.setMesh?.(pack.rounded ? 'rounded' : 'chamfered');
     dice3d.addSystem(system);
     dice3d.addDicePreset({

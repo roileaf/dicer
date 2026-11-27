@@ -4,6 +4,7 @@ import { BURSTS } from '../../effects/library/bursts.js';
 import { CATALOGUE } from '../../effects/library/catalogue.js';
 import { DIE_EFFECTS } from '../../effects/library/die-effects.js';
 import { localScaleOf } from '../materials/bodies.js';
+import { GROUP } from '../sounds/register.js';
 import { tierConfig } from '../quality/state.js';
 import { reducedMotion, stageOf } from './stage.js';
 
@@ -18,36 +19,7 @@ const TRAIL_MAX_MS = 12000;
 const SPARKS_MS = 450;
 const SHAKE_PX = 6;
 
-const motions = new WeakMap();
-
-const SPEED_REST_S = 0.1;
-export const SPARK_GAIN = 1.8;
-
-export function trackSpeed({ dice, delta }) {
-  const p = dice?.parent?.position;
-  if (!p || !(delta > 0)) return;
-  const m = motions.get(dice);
-  if (!m) {
-    motions.set(dice, { at: p.clone(), speed: 0, before: 0, elapsed: 0 });
-    return;
-  }
-  m.elapsed += delta;
-  const moved = m.at.distanceTo(p);
-  if (moved > 0) {
-    m.before = m.speed;
-    m.speed = moved / m.elapsed;
-    m.elapsed = 0;
-    m.at.copy(p);
-  } else if (m.elapsed > SPEED_REST_S) {
-    m.before = 0;
-    m.speed = 0;
-  }
-}
-
-export function speedOf(dicemesh) {
-  const m = motions.get(dicemesh);
-  return m ? Math.max(m.speed, m.before) : 0;
-}
+export const SPARK_STRENGTH = 0.9;
 
 export function damageTypeOf(dicemesh) {
   const role = dicemesh?.die?.role;
@@ -150,6 +122,7 @@ export function effectClass(DiceSFX, mod, name) {
   return class extends DiceSFX {
     static id = sfxId(mod.id);
     static specialEffectName = name;
+    static group = GROUP;
 
     async play() {
       this.stage = stageOf(this.box);
@@ -194,6 +167,7 @@ export function trailClass(DiceSFX, name) {
   return class extends DiceSFX {
     static id = TRAIL_ID;
     static specialEffectName = name;
+    static group = GROUP;
 
     async play() {
       this.stage = stageOf(this.box);
@@ -231,6 +205,7 @@ export function sparksClass(DiceSFX, name) {
   return class extends DiceSFX {
     static id = SPARKS_ID;
     static specialEffectName = name;
+    static group = GROUP;
 
     async play() {
       const hit = this.hit;
@@ -239,14 +214,14 @@ export function sparksClass(DiceSFX, name) {
         return false;
       }
       this.stage = stageOf(this.box);
-      const speed = (SPARK_GAIN * speedOf(this.dicemesh)) / this.stage.scale;
-      if (!(speed >= this.stage.impactFx.minSpeed)) {
+      const strength = Number(hit.strength);
+      if (!(strength >= SPARK_STRENGTH)) {
         this.destroyed = true;
         return false;
       }
       this.t0 = performance.now();
       this.stage.impactFx.impact({
-        speed,
+        speed: (this.stage.impactFx.minSpeed * strength) / SPARK_STRENGTH,
         position: this.stage.toStage(hit.position),
         dieKey: this.dicemesh.id,
       });
@@ -271,8 +246,7 @@ const TITLE = (id) =>
 export function effectName(id, localize = (k) => globalThis.game?.i18n?.localize(k) ?? k) {
   const key = `DICER.V2.Effects.${id}`;
   const text = localize(key);
-  const label = text && text !== key ? text : TITLE(id);
-  return `${label} (Dicer)`;
+  return text && text !== key ? text : TITLE(id);
 }
 
 export function defaultLines() {
@@ -318,8 +292,4 @@ export function registerEffects(dice3d, DiceSFX) {
   add(sparksClass(DiceSFX, effectName('impact-sparks')));
   dice3d.addSFXDefaults(defaultLines());
   return ids;
-}
-
-export function registerEffectHooks(hooks = globalThis.Hooks) {
-  hooks.on('diceSoNiceDiceFrame', (event) => void trackSpeed(event));
 }

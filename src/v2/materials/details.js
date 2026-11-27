@@ -233,6 +233,7 @@ const hint = (text) => `<p class="hint">${text}</p>`;
 export function addDetailSettings(material, L, V) {
   const options = (keys, group) => Object.fromEntries(keys.map((k) => [k, L(`${group}.${k}`)]));
   const d = DETAIL_DEFAULTS;
+  const styled = { strip: Object.keys(STRIPS).filter((k) => k !== 'body') };
   material.addSettingSeparator({ name: L('Section.numbers') });
   material.addSettingSelect({
     id: 'ink',
@@ -247,6 +248,7 @@ export function addDetailSettings(material, L, V) {
     min: 0,
     max: 300,
     step: 10,
+    showIf: { ink: 'glow' },
   });
   material.addSettingSeparator({ name: L('Section.glow') });
   material.addSettingHTML({ name: hint(L('Glow.Hint')) });
@@ -267,7 +269,12 @@ export function addDetailSettings(material, L, V) {
     defaultValue: d.strip,
     options: options(Object.keys(STRIPS), 'Strip'),
   });
-  material.addSettingColor({ id: 'stripColor', name: L('Glow.Color'), defaultValue: d.stripColor });
+  material.addSettingColor({
+    id: 'stripColor',
+    name: L('Glow.Color'),
+    defaultValue: d.stripColor,
+    showIf: styled,
+  });
   material.addSettingRange({
     id: 'stripStrength',
     name: L('Edges.StripStrength'),
@@ -275,6 +282,7 @@ export function addDetailSettings(material, L, V) {
     min: 0,
     max: 100,
     step: 5,
+    showIf: styled,
   });
   material.addSettingRange({
     id: 'stripWidth',
@@ -283,10 +291,8 @@ export function addDetailSettings(material, L, V) {
     min: 0,
     max: 100,
     step: 5,
+    showIf: styled,
   });
-  material.showWhen?.('inkGlow', 'ink', 'glow');
-  for (const row of ['stripColor', 'stripStrength', 'stripWidth'])
-    material.hideWhen?.(row, 'strip', 'body');
   return material;
 }
 

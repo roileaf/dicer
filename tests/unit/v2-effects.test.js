@@ -9,14 +9,11 @@ import {
   effectName,
   EFFECTS,
   fxUniforms,
-  registerEffectHooks,
   registerEffects,
   sfxId,
   SPARKS_ID,
   sparksClass,
-  SPARK_GAIN,
-  speedOf,
-  trackSpeed,
+  SPARK_STRENGTH,
   TRAIL_ID,
   trailClass,
   v1Die,
@@ -138,8 +135,8 @@ describe('v2 effects as DsN effect classes (DsN 5.6)', () => {
       defaults: { color: '#ff0000', intensity: 2, duration: 500 },
       start: vi.fn((c) => ((ctx = c), handle)),
     };
-    const Cls = effectClass(DiceSFX, mod, 'Test (Dicer)');
-    expect([Cls.id, Cls.specialEffectName]).toEqual(['Dicer.test-fx', 'Test (Dicer)']);
+    const Cls = effectClass(DiceSFX, mod, 'Test');
+    expect([Cls.id, Cls.specialEffectName, Cls.group]).toEqual(['Dicer.test-fx', 'Test', 'Dicer']);
     const sfx = new Cls(box, mesh);
     expect(await sfx.play()).toBe(true);
     expect(ctx.scene).toBe(stageOf(box).group);
@@ -233,63 +230,35 @@ describe('v2 effects as DsN effect classes (DsN 5.6)', () => {
     expect(trail.destroyed).toBe(true);
   });
 
-  it('sparks where a die hits the table hard: by the die`s own speed, DsN`s strength is nearly always 1', async () => {
+  it('sparks where a die hits the table hard, by the strength of DsN`s hit', async () => {
     const box = board();
     const stage = stageOf(box);
     const Sparks = sparksClass(DiceSFX, 'Sparks');
-    expect(Sparks.id).toBe(SPARKS_ID);
+    expect([Sparks.id, Sparks.group]).toEqual([SPARKS_ID, 'Dicer']);
     const impact = vi.spyOn(stage.impactFx, 'impact');
     const now = vi.spyOn(performance, 'now');
     now.mockReturnValue(0);
-    const at = (kind) => ({ kind, position: new THREE.Vector3(EDGE, 0, 0), strength: 1 });
-    const moving = (metresPerSecond) => {
-      const mesh = dieMesh(box);
-      trackSpeed({ dice: mesh, delta: 0.016 });
-      mesh.parent.position.x += metresPerSecond * 0.016;
-      trackSpeed({ dice: mesh, delta: 0.016 });
-      return mesh;
-    };
-    const fast = (stage.impactFx.minSpeed * stage.scale * 1.5) / SPARK_GAIN;
-    const play = async (mesh, hit) => {
-      const sfx = new Sparks(box, mesh);
+    const at = (kind, strength) => ({ kind, position: new THREE.Vector3(EDGE, 0, 0), strength });
+    const play = async (hit) => {
+      const sfx = new Sparks(box, dieMesh(box));
       sfx.hit = hit;
       return [await sfx.play(), sfx];
     };
-    expect((await play(moving(fast), null))[0]).toBe(false);
-    expect((await play(moving(fast), at('dice')))[0]).toBe(false);
-    expect((await play(moving(fast / 3), at('table')))[0]).toBe(false);
-    expect((await play(dieMesh(box), at('table')))[0]).toBe(false);
+    expect((await play(null))[0]).toBe(false);
+    expect((await play(at('dice', 1)))[0]).toBe(false);
+    expect((await play(at('table', SPARK_STRENGTH - 0.05)))[0]).toBe(false);
+    expect((await play(at('table', undefined)))[0]).toBe(false);
     expect(impact).not.toHaveBeenCalled();
-    const mesh = moving(fast);
-    expect(speedOf(mesh)).toBeCloseTo(fast, 6);
-    const [played, sfx] = await play(mesh, at('table'));
+    const [played, sfx] = await play(at('table', 1));
     expect(played).toBe(true);
     const hit = impact.mock.calls[0][0];
-    expect(hit.speed).toBeCloseTo(stage.impactFx.minSpeed * 1.5, 6);
+    expect(hit.speed).toBeCloseTo(stage.impactFx.minSpeed / SPARK_STRENGTH, 6);
     expect(hit.position.x).toBeCloseTo(V1_D6_EDGE, 9);
+    expect((await play(at('table', SPARK_STRENGTH)))[0]).toBe(true);
+    expect(impact.mock.calls[1][0].speed).toBeCloseTo(stage.impactFx.minSpeed, 6);
     now.mockReturnValue(500);
     sfx.render();
     expect(sfx.destroyed).toBe(true);
-  });
-
-  it('follows each die`s speed from DsN`s frame event, returning nothing to Hooks.call', () => {
-    const hooks = { on: vi.fn() };
-    registerEffectHooks(hooks);
-    expect(hooks.on.mock.calls.map(([name]) => name)).toEqual(['diceSoNiceDiceFrame']);
-    const mesh = dieMesh(board());
-    const frame = hooks.on.mock.calls[0][1];
-    expect(frame({ dice: mesh, delta: 0.006 })).toBeUndefined();
-    for (let step = 0; step < 3; step++) {
-      frame({ dice: mesh, delta: 0.006 });
-      frame({ dice: mesh, delta: 0.006 });
-      mesh.parent.position.z += 0.009;
-      frame({ dice: mesh, delta: 0.006 });
-      expect(speedOf(mesh)).toBeCloseTo(0.5, 9);
-    }
-    for (let i = 0; i < 16; i++) frame({ dice: mesh, delta: 0.006 });
-    expect(speedOf(mesh)).toBeCloseTo(0.5, 9);
-    frame({ dice: mesh, delta: 0.006 });
-    expect(speedOf(mesh)).toBe(0);
   });
 
   it('registers every v1 effect, the trail and the sparks, and default lines for players who never saved theirs', () => {
@@ -331,7 +300,7 @@ describe('v2 effects as DsN effect classes (DsN 5.6)', () => {
   });
 
   it('names an effect from its translation, else from its id', () => {
-    expect(effectName('glow-pulse', (k) => k)).toBe('Glow Pulse (Dicer)');
-    expect(effectName('trail', () => 'Elemental trail')).toBe('Elemental trail (Dicer)');
+    expect(effectName('glow-pulse', (k) => k)).toBe('Glow Pulse');
+    expect(effectName('trail', () => 'Elemental trail')).toBe('Elemental trail');
   });
 });

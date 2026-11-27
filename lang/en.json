@@ -1539,26 +1539,26 @@
     "V2": {
       "NeedsDsn": "Dicer needs Dice So Nice: enable it in Manage Modules.",
       "Surface": {
-        "felt": "Felt (Dicer)",
-        "wood": "Wood (Dicer)",
-        "stone": "Stone (Dicer)",
-        "metal": "Metal (Dicer)"
+        "felt": "Felt",
+        "wood": "Wood",
+        "stone": "Stone",
+        "metal": "Metal"
       },
       "Ambiance": {
-        "studio": "Studio (Dicer)"
+        "studio": "Studio"
       },
       "Material": {
-        "opaque": "Opaque (Dicer)",
-        "metal": "Metal (Dicer)",
-        "marble": "Marble (Dicer)",
-        "pearl": "Pearl (Dicer)",
-        "iridescent": "Iridescent (Dicer)",
-        "gem": "Gemstone (Dicer)",
-        "wood": "Wood (Dicer)",
-        "stone": "Stone (Dicer)",
-        "bone": "Bone (Dicer)",
-        "resin": "Clear resin (Dicer)",
-        "jelly": "Jelly (Dicer)",
+        "opaque": "Opaque",
+        "metal": "Metal",
+        "marble": "Marble",
+        "pearl": "Pearl",
+        "iridescent": "Iridescent",
+        "gem": "Gemstone",
+        "wood": "Wood",
+        "stone": "Stone",
+        "bone": "Bone",
+        "resin": "Clear resin",
+        "jelly": "Jelly",
         "JellyGlow": "Glow in the second colour",
         "Style": "Style",
         "Width": "Width",
@@ -1582,7 +1582,7 @@
       "Quality": {
         "Hint": "Auto starts at High and steps down when rolls stay slow, remembering it for next time. Lower tiers draw the insides of resin dice with fewer steps and fewer particles, and from Medium down also turn off some of Dice So Nice's display options for this session. Your own Dice So Nice settings are never changed."
       },
-      "Icons": "Dicer d20 icons"
+      "Icons": "d20 icons"
     }
   }
 }
