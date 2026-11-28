@@ -673,6 +673,8 @@ const dockManual = (e, force) => {
   if (!dormant && (force || getSetting('manualButton'))) manual().then((m) => m.dockToggle(e, syncHand));
 };
 for (const h of ['renderChatInput', 'renderChatLog']) Hooks.on(h, (a, e) => dockManual(e));
+// manualEntry (the button, the settings window or a BBMM lock) switches this browser's dice
+const syncManual = () => dormant || manual().then((m) => m.syncManual(syncHand));
 Hooks.on('renderRollResolver', (app, el) => {
   if (!dormant && getSetting('manualDiceForm') && el.querySelector('[data-method="manual"]'))
     manual().then((m) => m.decorate(app, el, ownLook));
@@ -709,7 +711,7 @@ Hooks.once('init', () => {
     onTrayChange: () => syncTray(),
     onGrabChange: (on) => syncGrab(diceBox, on),
     onInstalledDiceChange: () => loadInstalled(),
-    onManualChange: () => dockManual(null, true),
+    onManualChange: (entry) => (entry ? syncManual() : dockManual(null, true)),
   });
   try {
     registerHandMethod(); // CONFIG.Dice.fulfillment.methods.dicer with the DicerResolver
@@ -809,6 +811,7 @@ Hooks.once('ready', async () => {
   }).catch((err) => console.warn('dicer: cannot move the look setting to theme', err));
   migratePetStay(game.settings.storage.get('client'), (k, v) => game.settings.set('dicer', k, v));
   syncHand();
+  if (getSetting('manualEntry') || Object.keys(getSetting('manualStash') ?? {}).length) syncManual();
   Promise.all([migrateFromDsn(), lookMigrated])
     .then(() => mirrorLookIfMissing(game.user, getSetting('theme')))
     .catch((err) => console.warn('dicer: cannot mirror the theme setting to the user flag', err));

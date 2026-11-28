@@ -161,7 +161,7 @@ export const resetControls = () => {
  * @param {() => void} [callbacks.onTrayChange] runs when a dice tray setting changes
  * @param {(value: boolean) => void} [callbacks.onGrabChange] runs when grabDice changes
  * @param {() => void} [callbacks.onInstalledDiceChange] runs when installedDice changes (every client)
- * @param {() => void} [callbacks.onManualChange] runs when manualButton changes (every client)
+ * @param {(entry?: boolean) => void} [callbacks.onManualChange] runs when manualButton changes (every client), or with true when manualEntry does
  */
 export function registerSettings({
   onAreaChange,
@@ -799,6 +799,7 @@ export function registerSettings({
     ['diceTray', 'user', Boolean, true, { onChange: resetControls }], // its tool
     ['chatTray', 'user', Boolean, true], // its chunk follows it (createSetting, updateSetting)
     ['manualButton', 'world', Boolean, false, { onChange: () => onManualChange?.() }], // the chat button
+    ['manualEntry', 'client', Boolean, false, { onChange: () => onManualChange?.(true) }], // this browser types its dice in (BBMM can lock it)
     ['manualDiceForm', 'user', Boolean, true], // typed-in dice drawn as big die shapes
   ];
   hand.forEach(([key, scope, type, def, more], i) =>

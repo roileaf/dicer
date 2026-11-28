@@ -12,6 +12,8 @@ import {
   manualConfig,
   rolledConfig,
   toggleManual,
+  syncManual,
+  lockedByGm,
   dockToggle,
   colorsOf,
   PLAIN_COLORS,
@@ -197,11 +199,34 @@ describe('the dice configuration', () => {
     expect(manualOn(Object.fromEntries(MANUAL_KEYS.map((k) => [k, 'pixels'])))).toBe(false);
   });
 
-  it('toggleManual switches and restores, then runs the hand sync', async () => {
+});
+
+describe('manualEntry', () => {
+  let stored;
+  let sync;
+  beforeEach(() => {
+    stored = new Map();
+    sync = vi.fn();
+    const set = game.settings.set;
+    // Foundry runs the setting's onChange (main.js: syncManual) and stores a client setting in the browser
+    game.settings.set = async (ns, k, v) => {
+      await set(ns, k, v);
+      if (`${ns}.${k}` === 'dicer.manualEntry') {
+        stored.set('dicer.manualEntry', JSON.stringify(v));
+        syncManual(sync); // Foundry does not wait for onChange
+      }
+      return v;
+    };
+    game.settings.storage = { get: () => ({ getItem: (k) => stored.get(k) ?? null }) };
+    game.modules = new Map();
+    game.user = { isGM: false };
+    store['dicer.manualEntry'] = false;
+  });
+
+  it('the button flips it: every die typed in, then the stashed methods back, the hand sync after each', async () => {
     store['core.diceConfiguration'] = { d6: 'mersenne' };
-    const sync = vi.fn();
-    dockToggle(null, sync);
     await toggleManual();
+    expect(store['dicer.manualEntry']).toBe(true);
     expect(manualOn(store['core.diceConfiguration'])).toBe(true);
     expect(store['dicer.manualStash'].d6).toBe('mersenne');
     expect(sync).toHaveBeenCalledTimes(1);
@@ -210,6 +235,62 @@ describe('the dice configuration', () => {
     expect(store['core.diceConfiguration']).toEqual({ d6: 'mersenne' });
     expect(store['dicer.manualStash']).toEqual({});
     expect(infos.at(-1)).toBe('DICER.Manual.Off');
+  });
+
+  it('a value set from elsewhere (a BBMM lock at login) switches the dice too', async () => {
+    store['core.diceConfiguration'] = {};
+    await game.settings.set('dicer', 'manualEntry', true);
+    await syncManual(sync);
+    expect(manualOn(store['core.diceConfiguration'])).toBe(true);
+  });
+
+  it('off never undoes dice set to manual in Foundry\'s own Configure Dice', async () => {
+    store['core.diceConfiguration'] = allManual();
+    stored.set('dicer.manualEntry', 'false');
+    await syncManual(sync);
+    expect(store['core.diceConfiguration']).toEqual(allManual());
+    expect(sync).not.toHaveBeenCalled();
+  });
+
+  it('a 1.5.x button switch (typed in and stashed, never stored) becomes manualEntry on', async () => {
+    store['core.diceConfiguration'] = allManual();
+    store['dicer.manualStash'] = { d20: 'dicer' };
+    await syncManual(sync);
+    await syncManual(sync);
+    expect(store['dicer.manualEntry']).toBe(true);
+    expect(store['core.diceConfiguration']).toEqual(allManual());
+    expect(store['dicer.manualStash']).toEqual({ d20: 'dicer' });
+  });
+
+  it('a BBMM hard lock: the button warns and changes nothing; a soft lock or a GM is never locked', async () => {
+    game.modules.set('bbmm', { active: true });
+    store['bbmm.enableUserSettingSync'] = true;
+    store['bbmm.userSettingSync'] = { 'dicer.manualEntry': { namespace: 'dicer', key: 'manualEntry', value: true } };
+    expect(lockedByGm()).toBe(true);
+    const warn = vi.fn();
+    ui.notifications.warn = warn;
+    await toggleManual();
+    expect(warn).toHaveBeenCalledWith('DICER.Manual.Locked');
+    expect(store['dicer.manualEntry']).toBe(false);
+    store['bbmm.userSettingSync']['dicer.manualEntry'].soft = true;
+    expect(lockedByGm()).toBe(false);
+    delete store['bbmm.userSettingSync']['dicer.manualEntry'].soft;
+    game.user.isGM = true;
+    expect(lockedByGm()).toBe(false);
+    game.user.isGM = false;
+    store['bbmm.enableUserSettingSync'] = false;
+    expect(lockedByGm()).toBe(false);
+  });
+
+  it('the button shows the lock', () => {
+    document.body.innerHTML = '<div id="chat-controls"><div id="message-modes"></div></div>';
+    game.modules.set('bbmm', { active: true });
+    store['bbmm.userSettingSync'] = { 'dicer.manualEntry': { value: true } };
+    store['dicer.manualEntry'] = true;
+    const b = dockToggle({ '#chat-controls': document.getElementById('chat-controls') });
+    expect(b.classList.contains('dicer-manual-locked')).toBe(true);
+    expect(b.getAttribute('aria-pressed')).toBe('true');
+    expect(b.getAttribute('aria-label')).toBe('DICER.Manual.ButtonOn (DICER.Manual.Locked)');
   });
 });
 
@@ -222,7 +303,7 @@ describe('dockToggle', () => {
 
   it("a player's button: its own control group after the message modes, pressed when the dice are typed in", () => {
     const c = controls();
-    store['core.diceConfiguration'] = allManual();
+    store['dicer.manualEntry'] = true;
     const b = dockToggle({ '#chat-controls': c });
     const group = c.querySelector('#message-modes').nextElementSibling;
     expect(group.classList.contains('dicer-manual-group')).toBe(true);

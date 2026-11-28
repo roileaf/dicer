@@ -273,6 +273,10 @@
         "Name": "Typed-in dice button in chat",
         "Hint": "A keyboard button beside the chat's message modes. Each player (or each browser, at a shared screen) presses it to type in the results of their real dice, and presses it again to go back to rolling. Hidden while rolling by hand is required."
       },
+      "manualEntry": {
+        "Name": "Type in my dice results",
+        "Hint": "This browser asks you to type in the results of your real dice instead of rolling them (the typed-in dice button switches the same thing). Dice on electronic dice such as Pixels stay on them. A GM can lock it for players with Big Bad Module Manager."
+      },
       "manualDiceForm": {
         "Name": "Big dice when typing in results",
         "Hint": "In Foundry's window for typing in dice results, each die is drawn as a big faceted die in your dice theme's colours, with its number on the front face, so new players see which die to roll."
@@ -1349,6 +1353,7 @@
     "Manual": {
       "ButtonOff": "Type in my dice results (now rolling)",
       "ButtonOn": "Roll my dice again (now typing in results)",
+      "Locked": "Locked by the GM",
       "On": "Your dice are now typed in: roll your real dice and enter what they show.",
       "Off": "Your dice are rolled again."
     },

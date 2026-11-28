@@ -229,6 +229,10 @@ export const MANUAL_CSS = `
   border-color: var(--dicer-ct-accent);
   color: var(--dicer-ct-accent);
 }
+.dicer-manual-toggle.dicer-manual-locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 `;
 
 const injectStyle = (doc) => {
@@ -374,31 +378,88 @@ export function rolledConfig(core, stash = {}) {
 }
 
 let sync = null;
-let busy = false;
+let queue = Promise.resolve();
 
-/** Switches this browser's dice between typed in and rolled; then the hand sync (main.js's). */
-export async function toggleManual() {
-  if (busy) return;
-  busy = true;
+/** This browser types its dice in (the manualEntry client setting: the button, the settings window, a BBMM lock). */
+const wanted = () => setting('manualEntry', false) === true;
+
+/** manualEntry was never stored in this browser (a 1.5.x button switch predates it). */
+function neverSet() {
+  try {
+    return game.settings.storage.get('client').getItem('dicer.manualEntry') === null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The GM hard-locked manualEntry with Big Bad Module Manager (its Setting Locks): BBMM puts the
+ * locked value back whenever a player changes it, so the button does not offer the switch. A GM is
+ * never locked; a soft lock is only a recommendation.
+ */
+export function lockedByGm() {
+  try {
+    if (game.user?.isGM || !game.modules?.get('bbmm')?.active) return false;
+    if (game.settings.get('bbmm', 'enableUserSettingSync') === false) return false;
+    const entry = game.settings.get('bbmm', 'userSettingSync')?.['dicer.manualEntry'];
+    return !!entry && entry.soft !== true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Brings this browser's dice configuration in line with manualEntry: on, every die typed in (the
+ * methods they had stashed); off, the stashed methods back. Off never undoes dice that something
+ * else set to manual (Foundry's own Configure Dice): only a switch this made has a stash. A 1.5.x
+ * button switch (typed in, stashed, manualEntry never stored) becomes manualEntry on. Then the
+ * hand sync (main.js's). Calls run one after another.
+ */
+async function applyManual() {
   try {
     const core = game.settings.get('core', 'diceConfiguration') ?? {};
-    if (manualOn(core)) {
-      const out = rolledConfig(core, game.settings.get('dicer', 'manualStash') ?? {});
-      await game.settings.set('core', 'diceConfiguration', out);
-      await game.settings.set('dicer', 'manualStash', {});
-    } else {
-      const { out, stash } = manualConfig(core, game.settings.get('dicer', 'handRollMapped') ?? []);
-      await game.settings.set('dicer', 'manualStash', stash);
-      await game.settings.set('core', 'diceConfiguration', out);
+    const stash = game.settings.get('dicer', 'manualStash') ?? {};
+    const stashed = Object.keys(stash).length > 0;
+    const want = wanted();
+    if (!want && stashed && manualOn(core) && neverSet()) {
+      await game.settings.set('dicer', 'manualEntry', true);
+      return;
     }
+    if (want && !manualOn(core)) {
+      const fresh = manualConfig(core, game.settings.get('dicer', 'handRollMapped') ?? []);
+      await game.settings.set('dicer', 'manualStash', { ...stash, ...fresh.stash });
+      await game.settings.set('core', 'diceConfiguration', fresh.out);
+    } else if (!want && stashed) {
+      await game.settings.set('core', 'diceConfiguration', rolledConfig(core, stash));
+      await game.settings.set('dicer', 'manualStash', {});
+    } else return;
     sync?.();
-    const on = manualOn(game.settings.get('core', 'diceConfiguration'));
-    ui.notifications?.info(game.i18n.localize(`DICER.Manual.${on ? 'On' : 'Off'}`));
   } catch (err) {
     console.warn('dicer: cannot switch typed-in dice', err);
   } finally {
-    busy = false;
     paint();
+  }
+}
+
+/** Applies manualEntry (main.js: at ready and on its change). `syncHand`: main.js's hand sync. */
+export function syncManual(syncHand) {
+  if (syncHand) sync = syncHand;
+  return (queue = queue.then(applyManual));
+}
+
+/** The button: flips manualEntry (its change switches the dice), unless the GM locked it. */
+export async function toggleManual() {
+  try {
+    if (lockedByGm()) {
+      ui.notifications?.warn(game.i18n.localize('DICER.Manual.Locked'));
+      return;
+    }
+    const on = !wanted();
+    await game.settings.set('dicer', 'manualEntry', on);
+    await queue;
+    ui.notifications?.info(game.i18n.localize(`DICER.Manual.${on ? 'On' : 'Off'}`));
+  } catch (err) {
+    console.warn('dicer: cannot switch typed-in dice', err);
   }
 }
 
@@ -406,18 +467,16 @@ let button = null;
 let group = null;
 let hooked = false;
 
-/** The button's pressed state and tooltip, from this browser's dice configuration. */
+/** The button's pressed state, lock and tooltip, from manualEntry and a BBMM lock. */
 function paint() {
   const b = button;
   if (!b) return;
-  let on = false;
-  try {
-    on = manualOn(game.settings.get('core', 'diceConfiguration'));
-  } catch {
-    /* not registered */
-  }
+  const on = wanted();
+  const locked = lockedByGm();
   b.setAttribute('aria-pressed', String(on));
-  b.setAttribute('aria-label', game.i18n.localize(`DICER.Manual.${on ? 'ButtonOn' : 'ButtonOff'}`));
+  b.classList.toggle('dicer-manual-locked', locked);
+  const label = game.i18n.localize(`DICER.Manual.${on ? 'ButtonOn' : 'ButtonOff'}`);
+  b.setAttribute('aria-label', locked ? `${label} (${game.i18n.localize('DICER.Manual.Locked')})` : label);
 }
 
 /** The button is shown: the GM's manualButton, and no hand rolls required (they take every die). */
@@ -450,12 +509,11 @@ export function dockToggle(els, syncHand) {
     if (syncHand) sync = syncHand;
     if (!hooked) {
       hooked = true;
-      Hooks.on('updateSetting', (doc) => {
-        if (doc?.key === 'core.diceConfiguration') paint();
-      });
-      Hooks.on('createSetting', (doc) => {
-        if (doc?.key === 'core.diceConfiguration') paint();
-      });
+      const repaint = new Set(['core.diceConfiguration', 'bbmm.userSettingSync', 'bbmm.enableUserSettingSync']);
+      for (const hook of ['updateSetting', 'createSetting'])
+        Hooks.on(hook, (doc) => {
+          if (repaint.has(doc?.key)) paint();
+        });
       Hooks.on('dicerChatTray', () => {
         dockToggle();
       });
