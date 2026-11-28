@@ -5,20 +5,6 @@ const MODULE = 'dicer';
 const MAX_FRAME_GAP_MS = 250;
 const SAME_FRAME_MS = 0.5;
 
-export const DSN_QUALITY = Object.freeze({
-  ultra: null,
-  high: null,
-  medium: Object.freeze({ shadowQuality: 'low', glow: false }),
-  low: Object.freeze({
-    shadowQuality: 'low',
-    glow: false,
-    antialiasing: 'none',
-    useHighDPI: false,
-    advancedGlass: false,
-    persistentDiceOutlines: false,
-  }),
-});
-
 const known = (tier) => TIER_ORDER.includes(tier);
 
 export function createQualityControl({
@@ -29,7 +15,6 @@ export function createQualityControl({
   localize = (key) => globalThis.game?.i18n?.localize(key) ?? key,
   now = () => performance.now(),
 } = {}) {
-  let ours = false;
   let ceiling = null;
   let notified = false;
   let lastFrame = null;
@@ -54,29 +39,9 @@ export function createQualityControl({
     return TIER_ORDER[Math.min(TIER_ORDER.indexOf(base), ceiling ?? TIER_ORDER.length - 1)];
   }
 
-  async function applyDsn(tier) {
-    const dice3d = getDice3d();
-    if (!dice3d?.setQuality) return;
-    const keys = DSN_QUALITY[tier];
-    if (ours && dice3d.getQuality?.().temporary === false) ours = false;
-    if (keys) {
-      await dice3d.setQuality({ ...keys });
-      ours = true;
-    } else if (ours) {
-      await dice3d.setQuality(null);
-      ours = false;
-    }
-  }
-
   async function apply() {
-    const tier = wanted();
-    const changed = setTier(tier);
+    const changed = setTier(wanted());
     if (changed) getDice3d()?.DiceFactory?.disposeCachedMaterials?.();
-    try {
-      await applyDsn(tier);
-    } catch (err) {
-      console.warn('dicer: cannot set the display quality', err);
-    }
     return changed;
   }
 
@@ -99,9 +64,6 @@ export function createQualityControl({
   return {
     get tier() {
       return currentTier();
-    },
-    get ours() {
-      return ours;
     },
     start: schedule,
     settled: () => pending,

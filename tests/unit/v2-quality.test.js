@@ -3,17 +3,15 @@ import { TIERS } from '../../src/render/quality.js';
 import { flags, lookOf, resinGlsl } from '../../src/v2/materials/resin.js';
 import {
   createQualityControl,
-  DSN_QUALITY,
   registerQuality,
   registerQualitySettings,
 } from '../../src/v2/quality/controller.js';
-import { currentTier, DEFAULT_TIER, setTier, tierConfig } from '../../src/v2/quality/state.js';
+import { DEFAULT_TIER, setTier, tierConfig } from '../../src/v2/quality/state.js';
 
-function world({ settings = {}, temporary = true } = {}) {
+function world({ settings = {} } = {}) {
   const store = { quality: 'auto', qualityCap: 'ultra', autoTier: '', ...settings };
   const dice3d = {
     setQuality: vi.fn(async () => {}),
-    getQuality: vi.fn(() => ({ temporary })),
     DiceFactory: { disposeCachedMaterials: vi.fn() },
   };
   let t = 0;
@@ -39,31 +37,33 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('v2 display quality on DsN`s setQuality (DsN 5.10)', () => {
-  it('starts at High, without touching DsN`s quality', async () => {
-    const { control, dice3d } = world();
+describe('v2 quality tier: Dicer`s own cost, DsN`s quality left to DsN', () => {
+  it('starts at High', async () => {
+    const { control } = world();
     await control.start();
     expect(control.tier).toBe('high');
-    expect(dice3d.setQuality).not.toHaveBeenCalled();
-    expect(control.ours).toBe(false);
   });
 
   it('starts at the tier remembered from an earlier visit, under the world`s cap', async () => {
     const a = world({ settings: { autoTier: 'medium' } });
     await a.control.start();
     expect(a.control.tier).toBe('medium');
-    expect(a.dice3d.setQuality).toHaveBeenCalledWith({ ...DSN_QUALITY.medium });
-    expect(a.control.ours).toBe(true);
     expect(a.dice3d.DiceFactory.disposeCachedMaterials).toHaveBeenCalledTimes(1);
     setTier(DEFAULT_TIER);
     const b = world({ settings: { quality: 'ultra', qualityCap: 'low' } });
     await b.control.start();
     expect(b.control.tier).toBe('low');
-    expect(b.dice3d.setQuality).toHaveBeenCalledWith({ ...DSN_QUALITY.low });
   });
 
-  it('never turns Realistic Lighting off: Dicer`s materials need it', () => {
-    for (const keys of Object.values(DSN_QUALITY)) expect(keys?.bumpMapping).toBeUndefined();
+  it('never sets DsN`s quality, so DsN`s Automatic keeps working', async () => {
+    const { control, dice3d, frames } = world({ settings: { quality: 'low' } });
+    await control.start();
+    frames(200, 16);
+    frames(600, 60);
+    await control.settled();
+    await control.refresh();
+    expect(control.tier).toBe('low');
+    expect(dice3d.setQuality).not.toHaveBeenCalled();
   });
 
   it('gives the insides and the particles the tier`s cost', async () => {
@@ -87,7 +87,6 @@ describe('v2 display quality on DsN`s setQuality (DsN 5.10)', () => {
     await control.settled();
     expect(control.tier).toBe('medium');
     expect(store.autoTier).toBe(control.tier);
-    expect(dice3d.setQuality).toHaveBeenCalledWith({ ...DSN_QUALITY.medium });
     expect(dice3d.DiceFactory.disposeCachedMaterials).toHaveBeenCalled();
     frames(2000, 60);
     await control.settled();
@@ -112,7 +111,7 @@ describe('v2 display quality on DsN`s setQuality (DsN 5.10)', () => {
   });
 
   it('does not remember a drop when the player chose a tier, and a new choice tries again', async () => {
-    const { control, frames, store, dice3d } = world({ settings: { quality: 'high' } });
+    const { control, frames, store } = world({ settings: { quality: 'high' } });
     await control.start();
     frames(200, 16);
     frames(600, 60);
@@ -122,26 +121,9 @@ describe('v2 display quality on DsN`s setQuality (DsN 5.10)', () => {
     store.quality = 'ultra';
     await control.refresh();
     expect(control.tier).toBe('ultra');
-    expect(dice3d.setQuality).toHaveBeenLastCalledWith(null);
-    expect(control.ours).toBe(false);
   });
 
-  it('goes back to the player`s DsN settings only when the change was Dicer`s', async () => {
-    const a = world({ settings: { quality: 'medium' }, temporary: false });
-    await a.control.start();
-    a.store.quality = 'high';
-    await a.control.refresh();
-    expect(a.dice3d.setQuality).toHaveBeenCalledTimes(1);
-    expect(a.dice3d.setQuality).not.toHaveBeenCalledWith(null);
-  });
-
-  it('survives a DsN that refuses, and a missing DsN', async () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { control, dice3d } = world({ settings: { quality: 'low' } });
-    dice3d.setQuality.mockRejectedValue(new Error('busy'));
-    await expect(control.start()).resolves.toBe(true);
-    expect(currentTier()).toBe('low');
-    setTier(DEFAULT_TIER);
+  it('survives a missing DsN', async () => {
     const none = createQualityControl({
       getDice3d: () => null,
       getSetting: () => 'medium',
