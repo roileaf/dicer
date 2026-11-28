@@ -2,7 +2,7 @@
   "id": "dicer",
   "title": "Dicer",
   "description": "3D dice that tumble and land on your real roll, for everyone at once. Design your own dice, watch fire damage burn, and get a little pet that cheers you on. A lighter alternative to Dice So Nice that keeps its API working, with thanks to Dice So Nice and its contributors.",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "socket": true,
   "compatibility": {
     "minimum": "14",

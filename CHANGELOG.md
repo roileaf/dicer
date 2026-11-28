@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3
+
+- **The GM can lock typed-in dice with Big Bad Module Manager.** A new setting, **Type in my dice results** (per browser, under **Typed-in dice**), is what switches your dice between typing in and rolling; the typed-in dice button now just flips it. With [Big Bad Module Manager](https://github.com/thejoester/bbmm) a GM can lock it for the players (BBMM's lock applies to every player): a hard lock switches their dice when they log in and keeps them that way, and the button shows the lock instead of switching. A soft lock only recommends. Turning it off puts back exactly what it switched, and never undoes dice you set to manual yourself in Foundry's Configure Dice. If you had already switched to typed-in with the button, you stay typed in.
+- **Fixed: Dicer's settings sections were mixed up.** The General settings (Enable 3D dice, Physics decides the result and the rest) showed up at the bottom, under the last section, with an empty General heading at the top. Each section now holds its own settings.
+
 ## 1.5.2
 
 - **For module authors: a look can set its own trail.** `appearance.trail` gives a look the trail it flies with, instead of the one its inside or damage type picks: `"void"` for that element's trail, `"none"` for no trail, or `{ element: "void", colors: ["#8a4cc0", "#2a0a3d"] }` to recolour it (start and end colour, on every layer of the trail). It follows the look everywhere: damage dice, a picked theme, `perType`. The **Elemental trails** setting still applies, and natural 20 bursts and pet reactions follow the element as before. Very dark colours fade out on a dark map. There is no control for it in the dice editor yet. Thanks to 0utrider.
