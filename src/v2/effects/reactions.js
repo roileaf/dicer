@@ -1,6 +1,7 @@
 import { matchRule } from '../../effects/rules.js';
 import { DIE_EFFECTS } from '../../effects/library/die-effects.js';
 import { BUILTIN_THEMES } from '../../themes/themes.js';
+import { settingDefaults } from '../materials/defaults.js';
 import { dsnLook } from '../themes/dsn-look.js';
 import { effectContext, EFFECTS, v1Die } from './classes.js';
 import { stageOf } from './stage.js';
@@ -10,7 +11,8 @@ const sorted = (o) =>
 const lower = (v) => (typeof v === 'string' ? v.toLowerCase() : '');
 
 export function lookKey({ material, materialSettings, dice, label }) {
-  return JSON.stringify([material, sorted(materialSettings), lower(dice), lower(label)]);
+  const settings = { ...settingDefaults(material), ...materialSettings };
+  return JSON.stringify([material, sorted(settings), lower(dice), lower(label)]);
 }
 
 export function themeIndex(themes = BUILTIN_THEMES) {

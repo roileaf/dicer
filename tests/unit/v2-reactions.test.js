@@ -9,6 +9,7 @@ import {
   themeIndex,
   themeOf,
 } from '../../src/v2/effects/reactions.js';
+import { settingDefaults } from '../../src/v2/materials/defaults.js';
 import { dsnAppearance } from '../../src/v2/themes/dsn-look.js';
 
 const theme = (id) => BUILTIN_THEMES.find((t) => t.id === id);
@@ -22,7 +23,7 @@ function board() {
   };
 }
 
-function dieOf(box, look, { asRoll = false } = {}) {
+function dieOf(box, look, { asRoll = false, filled = false } = {}) {
   const parent = new THREE.Group();
   box.scene.add(parent);
   const geometry = new THREE.BufferGeometry().setAttribute(
@@ -31,7 +32,10 @@ function dieOf(box, look, { asRoll = false } = {}) {
   );
   const mesh = new THREE.Mesh(geometry, new THREE.MeshPhysicalMaterial());
   parent.add(mesh);
-  const settings = Object.fromEntries(Object.entries(look.materialSettings).reverse());
+  const own = filled
+    ? { ...settingDefaults(look.material), ...look.materialSettings }
+    : look.materialSettings;
+  const settings = Object.fromEntries(Object.entries(own).reverse());
   mesh.material.userData.appearance = asRoll
     ? {
         material: look.material,
@@ -57,6 +61,29 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('v2 theme celebrations from the dice events (DsN 5.5)', () => {
   const index = themeIndex();
+
+  it('knows a die`s theme when DsN fills its settings with every default', () => {
+    const box = board();
+    for (const t of BUILTIN_THEMES.filter((x) => x.rules.length)) {
+      const look = dsnAppearance(t);
+      const type = Object.keys(look).find((k) => k !== 'global') ?? 'd20';
+      const die = dieOf(box, look[type] ?? look.global, { filled: true });
+      expect(themeOf(die, type, index)?.id, t.id).toBe(t.id);
+    }
+  });
+
+  it('reads each Dicer material`s setting defaults', () => {
+    const resin = settingDefaults('dicer.body-resin');
+    expect(resin).toMatchObject({
+      inside: expect.any(String),
+      inkGlow: expect.any(Number),
+      strip: 'body',
+    });
+    expect(Object.hasOwn(resin, 'irisColor')).toBe(true);
+    expect(Object.keys(settingDefaults('dicer.body-metal')).length).toBeGreaterThan(3);
+    expect(settingDefaults('plastic')).toEqual({});
+    expect(settingDefaults(undefined)).toEqual({});
+  });
 
   it('knows a die`s theme from the look DsN drew it with, on any client', () => {
     const box = board();
