@@ -182,6 +182,83 @@ describe('v2 theme browser', () => {
     expect(themeInUse(saved)).toBeNull();
   });
 
+  it('still knows the theme after DsN`s settings window saves the look again', () => {
+    const saved = {
+      global: {
+        labelColor: '#b38723',
+        diceColor: '#f2eff6',
+        outlineColor: 'none',
+        edgeColor: '#f2eff6',
+        texture: 'none',
+        material: 'dicer.body-pearl',
+        font: 'Dicer Serif',
+        colorset: 'custom',
+        system: 'rounded',
+        materialSettings: {
+          color2: '#b9d4f2',
+          roughness: 25,
+          ink: 'gold',
+          inkGlow: 100,
+          glowColor: '#ffffff',
+          glowIntensity: 0,
+          strip: 'body',
+          stripColor: '#ffffff',
+          stripStrength: 100,
+          stripWidth: 10,
+        },
+      },
+      d20: {
+        system: 'rounded',
+        colorset: 'custom',
+        texture: 'none',
+        material: 'dicer.body-resin',
+        font: 'Dicer Serif',
+        labelColor: '#f2f4f8',
+        labelColorSelector: '#f2f4f8',
+        diceColor: '#0a1030',
+        diceColorSelector: '#0a1030',
+        outlineColor: '#0b1f4a',
+        outlineColorSelector: '#0b1f4a',
+        edgeColor: '#0a1030',
+        edgeColorSelector: '#0a1030',
+        materialSettings: {
+          inside: 'shape',
+          insideColor: '#ffd24a',
+          irisColor: '#8a4dff',
+          insideColor2: '#fff3c4',
+          density: 60,
+          motion: true,
+          shape: 'star',
+          inclusion: 'flower',
+          bubble: false,
+          sand: false,
+          extra: 'glitter',
+          extraColor: '#ffffff',
+          extraDensity: 50,
+          roughness: 5,
+          ink: 'silver',
+          inkGlow: 100,
+          glowColor: '#ffffff',
+          glowIntensity: 0,
+          strip: 'body',
+          stripColor: '#ffffff',
+          stripStrength: 100,
+          stripWidth: 10,
+        },
+      },
+    };
+    expect(themeInUse(saved)).toBe('celestial');
+    const changed = JSON.parse(JSON.stringify(saved));
+    changed.d20.materialSettings.stripWidth = 20;
+    expect(themeInUse(changed)).toBeNull();
+    const relief = JSON.parse(JSON.stringify(saved));
+    relief.global.labelRelief = false;
+    expect(themeInUse(relief)).toBeNull();
+    const extra = JSON.parse(JSON.stringify(saved));
+    extra.d6 = extra.global;
+    expect(themeInUse(extra)).toBeNull();
+  });
+
   it('searches by name', () => {
     expect(matching(BUILTIN_THEMES, '  ').length).toBe(BUILTIN_THEMES.length);
     expect(matching(BUILTIN_THEMES, 'MOON').map((t) => t.id)).toEqual(['pearl-moon', 'blood-moon']);

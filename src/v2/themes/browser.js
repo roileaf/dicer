@@ -1,4 +1,5 @@
 import { BUILTIN_THEMES } from '../../themes/themes.js';
+import { settingDefaults } from '../materials/defaults.js';
 import { dsnAppearance } from './dsn-look.js';
 import { PICTURE_TYPES, pictureQueue } from './pictures.js';
 
@@ -7,7 +8,32 @@ const CARD_SIZE = 96;
 const DETAIL_SIZE = 220;
 const DIE_SIZE = 56;
 
-const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const RELIEF = ['textureRelief', 'labelRelief'];
+
+const equal = (a, b) =>
+  typeof a === 'string' && typeof b === 'string' ? a.toLowerCase() === b.toLowerCase() : a === b;
+
+function sameSettings(material, a = {}, b = {}) {
+  const defaults = settingDefaults(material);
+  const x = { ...defaults, ...a };
+  const y = { ...defaults, ...b };
+  return [...new Set([...Object.keys(x), ...Object.keys(y)])].every((k) => equal(x[k], y[k]));
+}
+
+function sameLook(theme, mine) {
+  if (!theme || !mine) return false;
+  for (const [key, value] of Object.entries(theme)) {
+    if (key === 'materialSettings') {
+      if (!sameSettings(theme.material, value, mine.materialSettings)) return false;
+    } else if (!RELIEF.includes(key) && !equal(value, mine[key])) return false;
+  }
+  return RELIEF.every((k) => (theme[k] ?? true) === (mine[k] ?? true));
+}
+
+const same = (theme, mine) =>
+  [...new Set([...Object.keys(theme), ...Object.keys(mine)])].every((scope) =>
+    sameLook(theme[scope], mine[scope]),
+  );
 
 export function themeInUse(appearance, themes = BUILTIN_THEMES) {
   if (!appearance) return null;
