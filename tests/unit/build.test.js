@@ -551,9 +551,9 @@ describe('build', () => {
     const growth = worldStartBytes() - 4_115_282;
     console.info(`dicer world-start growth since the living-insides base: ${growth} bytes`);
     // Typed-in dice lockable with Big Bad Module Manager (the manualEntry client setting and main's
-    // ready-time sync; the switch itself is in the lazy manual-entry chunk): owner approved +66 B
-    // (52,150 -> 52,216, on top of PR #19 and PR #20), 2026-11-28.
-    expect(growth).toBeLessThanOrEqual(52_216);
+    // ready-time sync; the switch itself is in the lazy manual-entry chunk): owner approved +182 B
+    // (52,150 -> 52,332, on top of PR #19 and PR #20), 2026-11-28.
+    expect(growth).toBeLessThanOrEqual(52_332);
   });
   it('ships no sourcemaps in dist/ (they are made only for scripts/bundle-report.mjs)', () => {
     const maps = readdirSync('dist', { recursive: true }).filter((f) => String(f).endsWith('.map'));
