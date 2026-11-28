@@ -6,6 +6,8 @@ export const LOUD_IMPACT_SPEED = 24; // first floor impact median ~24 is full vo
 export const MIN_GAIN = 0.03;
 export const DIE_DEBOUNCE_MS = 40;
 export const MAX_VOICES = 8;
+/** The same landing sound due again within this many ms of its voice starting plays no second voice. */
+export const RESULT_WINDOW_MS = 100;
 export const IDLE_SUSPEND_MS = 30000;
 export const CUSTOM_CACHE_SIZE = 32;
 export const UNFOCUSED_GAIN = 0.25;
@@ -102,7 +104,7 @@ export function createSoundEngine({
   const custom = new Map(); // src -> AudioBuffer (LRU, insertion order)
   const failed = new Set();
   const inflight = new Map();
-  let voices = []; // { src, gain, end }
+  let voices = []; // { src, gain, level, end }; a result voice also has `at` and, if shared, `key`
   let warnedCtx = false;
   let sprite = null; // { buffer, hits } once the recorded hits are decoded
   let spriteFailed = false;
@@ -239,7 +241,7 @@ export function createSoundEngine({
     }
     node.connect(g);
     g.connect(ctx.destination);
-    const voice = { src, gain, end: ctx.currentTime + (duration ?? buffer.duration) / rate };
+    const voice = { src, gain, level: g.gain, end: ctx.currentTime + (duration ?? buffer.duration) / rate };
     voices.push(voice);
     src.onended = () => {
       voices = voices.filter((v) => v !== voice);
@@ -250,12 +252,17 @@ export function createSoundEngine({
     return voice;
   }
 
-  /** Make room for a voice of `gain`; false when it should be dropped instead. */
-  function admit(gain, slots) {
+  /**
+   * Make room for a voice of `gain`; false when it should be dropped instead. For a landing sound,
+   * impacts stop first, and a result voice only when no impact is left.
+   */
+  function admit(gain, slots, landing) {
     prune();
     while (voices.length + slots > MAX_VOICES) {
-      let q = voices[0];
-      for (const v of voices) if (v.gain < q.gain) q = v;
+      const impacts = landing ? voices.filter((v) => v.at === undefined) : [];
+      const from = impacts.length ? impacts : voices;
+      let q = from[0];
+      for (const v of from) if (v.gain < q.gain) q = v;
       if (!q || q.gain >= gain) return false;
       try {
         q.src.stop();
@@ -410,8 +417,23 @@ export function createSoundEngine({
       else buf = own(sound, ctx) || (rendered ? bufferFor(`result:${sound.builtin}`) : null);
       if (!buf || disposed) return;
       if (ctx.state !== 'running') return;
+      // Dice landing together ask for one sound at once: stacked voices would add up to a louder one.
+      // A pet's voice (its own take or pitch) is left alone. Checked here, after any wait for the
+      // buffer, so requests that waited for one file together still share a voice.
+      const shared = sound.voice === undefined && sound.rate === undefined;
+      const key = shared ? (sound.src !== undefined ? `s:${sound.src}` : `b:${sound.builtin}`) : null;
+      const at = now();
+      if (shared) {
+        const playing = voices.find((v) => v.key === key && at - v.at < RESULT_WINDOW_MS);
+        if (playing) {
+          if (vol > playing.gain) playing.level.value = playing.gain = vol; // the louder request wins
+          return;
+        }
+        admit(Infinity, 1, true);
+      }
       // sound.rate: a pet's voice pitch (playback rate, 0.5..2)
-      start(buf, vol, sound.rate > 0 ? Math.min(2, Math.max(0.5, sound.rate)) : 1);
+      const rate = sound.rate > 0 ? Math.min(2, Math.max(0.5, sound.rate)) : 1;
+      Object.assign(start(buf, vol, rate), { key, at });
     } catch (e) {
       warn('Dicer: result sound failed', e);
     }
