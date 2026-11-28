@@ -54,6 +54,13 @@ describe('groupSettings', () => {
     expect(root.querySelector('h3').textContent).toBe('DICER.SettingsGroup.General');
   });
 
+  test("keeps every section whole when the first row is General's (Foundry's own order)", () => {
+    const root = windowOf(['enabled', 'physicsResults', 'quality', 'manualButton', 'manualEntry']);
+    groupSettings(root);
+    const order = [...root.children].map((el) => (el.matches('h3') ? `# ${el.dataset.group}` : (el.dataset.k ?? 'menu')));
+    expect(order).toEqual(['menu', '# General', 'enabled', 'physicsResults', '# Graphics', 'quality', '# Manual', 'manualButton', 'manualEntry', 'core']);
+  });
+
   test('runs once per render, skips empty sections, and never throws', () => {
     const root = windowOf(['enabled']);
     groupSettings(root);

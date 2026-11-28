@@ -34,9 +34,12 @@ export function groupSettings(root) {
   try {
     if (!root?.querySelector || root.querySelector('.dicer-settings-group')) return;
     const all = [...root.querySelectorAll('[name^="dicer."]')].map((el) => el.closest('.form-group')).filter(Boolean);
-    const anchor = all[0];
-    if (!anchor) return;
+    if (!all[0]) return;
     const doc = root.ownerDocument ?? globalThis.document;
+    // a fixed point where the first row was: the first row itself moves into its own section, so
+    // inserting before it would put every later section inside the first one
+    const anchor = doc.createComment('dicer settings');
+    all[0].before(anchor);
     const placed = new Set();
     for (const [id, keys] of GROUPS) {
       const rows = keys.map((k) => rowOf(root, k)).filter((r) => r && !placed.has(r));
@@ -44,6 +47,7 @@ export function groupSettings(root) {
       anchor.before(heading(doc, id), ...rows);
       for (const r of rows) placed.add(r);
     }
+    anchor.remove();
     const rest = all.filter((r) => !placed.has(r));
     if (rest.length) rest[0].before(heading(doc, 'Other'));
   } catch (err) {

@@ -271,7 +271,7 @@
       },
       "manualButton": {
         "Name": "Typed-in dice button in chat",
-        "Hint": "A keyboard button beside the chat's message modes. Each player (or each browser, at a shared screen) presses it to type in the results of their real dice, and presses it again to go back to rolling. Hidden while rolling by hand is required."
+        "Hint": "A keyboard button in the chat dice bar (or beside the chat's message modes when the dice bar is hidden). Each player (or each browser, at a shared screen) presses it to type in the results of their real dice, and presses it again to go back to rolling. Hidden while rolling by hand is required."
       },
       "manualEntry": {
         "Name": "Type in my dice results",
